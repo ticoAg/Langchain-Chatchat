@@ -45,10 +45,10 @@ FSCHAT_OPENAI_API = {
 # 在启动startup.py时，可用通过`--model-name xxxx yyyy`指定模型，不指定则为LLM_MODELS
 FSCHAT_MODEL_WORKERS = {
     "Qwen-14B-Chat": {
-        "port": 20009
+        "port": 21009
     },
     "Baichuan2-13B-Chat": {
-        "port": 20010
+        "port": 21010
     },
     # 所有模型共用的默认配置，可在模型专项配置中进行覆盖。
     "default": {
@@ -147,6 +147,6 @@ FSCHAT_MULTI_MODEL_WORKERS = {
 # fastchat controller server
 FSCHAT_CONTROLLER = {
     "host": DEFAULT_BIND_HOST,
-    "port": 20001,
+    "port": 10001,
     "dispatch_method": "shortest_queue",
 }
