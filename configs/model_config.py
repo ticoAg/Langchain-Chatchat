@@ -208,7 +208,7 @@ MODEL_PATH = {
         "Qwen-7B": "Qwen/Qwen-7B",
         "Qwen-14B": "Qwen/Qwen-14B",
         "Qwen-7B-Chat": "Qwen/Qwen-7B-Chat",
-        "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat",
+        # "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat",
         "Qwen-14B-Chat-Int8": "Qwen/Qwen-14B-Chat-Int8",  # 确保已经安装了auto-gptq optimum flash-attn
         "Qwen-14B-Chat-Int4": "Qwen/Qwen-14B-Chat-Int4",  # 确保已经安装了auto-gptq optimum flash-attn
     },
