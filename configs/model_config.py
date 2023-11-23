@@ -18,13 +18,13 @@ EMBEDDING_MODEL_OUTPUT_PATH = "output"
 
 # 要运行的 LLM 名称，可以包括本地模型和在线模型。
 # 第一个将作为 API 和 WEBUI 的默认模型
-LLM_MODELS = ["chatglm2-6b", "Qwen-14B-Chat-API", "Baichuan2-13B-Chat-API"]
+LLM_MODELS = ["chatglm2-6b", "Qwen-14B-Chat", "Baichuan2-13B-Chat"]
 
 # AgentLM模型的名称 (可以不指定，指定之后就锁定进入Agent之后的Chain的模型，不指定就是LLM_MODELS[0])
 Agent_MODEL = None
 
 # LLM 运行设备。设为"auto"会自动检测，也可手动设定为"cuda","mps","cpu"其中之一。
-LLM_DEVICE = "auto"
+LLM_DEVICE = "cuda:5"
 
 # 历史对话轮数
 HISTORY_LEN = 3
@@ -41,12 +41,12 @@ api_base_url = "http://10.228.67.99:26921/v1"
 
 ONLINE_LLM_MODEL = {
     # 线上模型。请在server_config中为每个在线API设置不同的端口
-    "Qwen-14B-Chat-API": {
+    "Qwen-14B-Chat": {
         "model_name": "Qwen-14B-Chat",
         "api_base_url": api_base_url,
         "api_key": "your OPENAI_API_KEY",
     },
-    "Baichuan2-13B-Chat-API": {
+    "Baichuan2-13B-Chat": {
         "model_name": "Baichuan2-13B-Chat",
         "api_base_url": api_base_url,
         "api_key": "your OPENAI_API_KEY",
