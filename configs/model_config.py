@@ -162,55 +162,55 @@ MODEL_PATH = {
 
     "llm_model": {
         # 以下部分模型并未完全测试，仅根据fastchat和vllm模型的模型列表推定支持
-        "chatglm2-6b": "THUDM/chatglm2-6b",
-        "chatglm2-6b-32k": "THUDM/chatglm2-6b-32k",
+        # "chatglm2-6b": "THUDM/chatglm2-6b",
+        # "chatglm2-6b-32k": "THUDM/chatglm2-6b-32k",
 
-        "baichuan2-13b": "baichuan-inc/Baichuan2-13B-Chat",
-        "baichuan2-7b": "baichuan-inc/Baichuan2-7B-Chat",
+        # "baichuan2-13b": "baichuan-inc/Baichuan2-13B-Chat",
+        # "baichuan2-7b": "baichuan-inc/Baichuan2-7B-Chat",
 
-        "baichuan-7b": "baichuan-inc/Baichuan-7B",
-        "baichuan-13b": "baichuan-inc/Baichuan-13B",
-        'baichuan-13b-chat': 'baichuan-inc/Baichuan-13B-Chat',
+        # "baichuan-7b": "baichuan-inc/Baichuan-7B",
+        # "baichuan-13b": "baichuan-inc/Baichuan-13B",
+        # 'baichuan-13b-chat': 'baichuan-inc/Baichuan-13B-Chat',
 
-        "aquila-7b": "BAAI/Aquila-7B",
-        "aquilachat-7b": "BAAI/AquilaChat-7B",
+        # "aquila-7b": "BAAI/Aquila-7B",
+        # "aquilachat-7b": "BAAI/AquilaChat-7B",
 
-        "internlm-7b": "internlm/internlm-7b",
-        "internlm-chat-7b": "internlm/internlm-chat-7b",
+        # "internlm-7b": "internlm/internlm-7b",
+        # "internlm-chat-7b": "internlm/internlm-chat-7b",
 
-        "falcon-7b": "tiiuae/falcon-7b",
-        "falcon-40b": "tiiuae/falcon-40b",
-        "falcon-rw-7b": "tiiuae/falcon-rw-7b",
+        # "falcon-7b": "tiiuae/falcon-7b",
+        # "falcon-40b": "tiiuae/falcon-40b",
+        # "falcon-rw-7b": "tiiuae/falcon-rw-7b",
 
-        "gpt2": "gpt2",
-        "gpt2-xl": "gpt2-xl",
+        # "gpt2": "gpt2",
+        # "gpt2-xl": "gpt2-xl",
 
-        "gpt-j-6b": "EleutherAI/gpt-j-6b",
-        "gpt4all-j": "nomic-ai/gpt4all-j",
-        "gpt-neox-20b": "EleutherAI/gpt-neox-20b",
-        "pythia-12b": "EleutherAI/pythia-12b",
-        "oasst-sft-4-pythia-12b-epoch-3.5": "OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5",
-        "dolly-v2-12b": "databricks/dolly-v2-12b",
-        "stablelm-tuned-alpha-7b": "stabilityai/stablelm-tuned-alpha-7b",
+        # "gpt-j-6b": "EleutherAI/gpt-j-6b",
+        # "gpt4all-j": "nomic-ai/gpt4all-j",
+        # "gpt-neox-20b": "EleutherAI/gpt-neox-20b",
+        # "pythia-12b": "EleutherAI/pythia-12b",
+        # "oasst-sft-4-pythia-12b-epoch-3.5": "OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5",
+        # "dolly-v2-12b": "databricks/dolly-v2-12b",
+        # "stablelm-tuned-alpha-7b": "stabilityai/stablelm-tuned-alpha-7b",
 
-        "Llama-2-13b-hf": "meta-llama/Llama-2-13b-hf",
-        "Llama-2-70b-hf": "meta-llama/Llama-2-70b-hf",
-        "open_llama_13b": "openlm-research/open_llama_13b",
-        "vicuna-13b-v1.3": "lmsys/vicuna-13b-v1.3",
-        "koala": "young-geng/koala",
+        # "Llama-2-13b-hf": "meta-llama/Llama-2-13b-hf",
+        # "Llama-2-70b-hf": "meta-llama/Llama-2-70b-hf",
+        # "open_llama_13b": "openlm-research/open_llama_13b",
+        # "vicuna-13b-v1.3": "lmsys/vicuna-13b-v1.3",
+        # "koala": "young-geng/koala",
 
-        "mpt-7b": "mosaicml/mpt-7b",
-        "mpt-7b-storywriter": "mosaicml/mpt-7b-storywriter",
-        "mpt-30b": "mosaicml/mpt-30b",
-        "opt-66b": "facebook/opt-66b",
-        "opt-iml-max-30b": "facebook/opt-iml-max-30b",
+        # "mpt-7b": "mosaicml/mpt-7b",
+        # "mpt-7b-storywriter": "mosaicml/mpt-7b-storywriter",
+        # "mpt-30b": "mosaicml/mpt-30b",
+        # "opt-66b": "facebook/opt-66b",
+        # "opt-iml-max-30b": "facebook/opt-iml-max-30b",
 
-        "Qwen-7B": "Qwen/Qwen-7B",
-        "Qwen-14B": "Qwen/Qwen-14B",
-        "Qwen-7B-Chat": "Qwen/Qwen-7B-Chat",
+        # "Qwen-7B": "Qwen/Qwen-7B",
+        # "Qwen-14B": "Qwen/Qwen-14B",
+        # "Qwen-7B-Chat": "Qwen/Qwen-7B-Chat",
         # "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat",
-        "Qwen-14B-Chat-Int8": "Qwen/Qwen-14B-Chat-Int8",  # 确保已经安装了auto-gptq optimum flash-attn
-        "Qwen-14B-Chat-Int4": "Qwen/Qwen-14B-Chat-Int4",  # 确保已经安装了auto-gptq optimum flash-attn
+        # "Qwen-14B-Chat-Int8": "Qwen/Qwen-14B-Chat-Int8",  # 确保已经安装了auto-gptq optimum flash-attn
+        # "Qwen-14B-Chat-Int4": "Qwen/Qwen-14B-Chat-Int4",  # 确保已经安装了auto-gptq optimum flash-attn
     },
 }
 
