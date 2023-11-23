@@ -19,8 +19,8 @@ HTTPX_DEFAULT_TIMEOUT = 300.0
 OPEN_CROSS_DOMAIN = False
 
 # 各服务器默认绑定host。如改为"0.0.0.0"需要修改下方所有XX_SERVER的host
-DEFAULT_BIND_HOST = "0.0.0.0" if sys.platform != "win32" else "127.0.0.1"
-# DEFAULT_BIND_HOST = "10.228.67.99"
+# DEFAULT_BIND_HOST = "0.0.0.0" if sys.platform != "win32" else "127.0.0.1"
+DEFAULT_BIND_HOST = "10.228.67.99"
 
 # webui.py server
 WEBUI_SERVER = {
@@ -44,12 +44,6 @@ FSCHAT_OPENAI_API = {
 # 这些模型必须是在model_config.MODEL_PATH或ONLINE_MODEL中正确配置的。
 # 在启动startup.py时，可用通过`--model-name xxxx yyyy`指定模型，不指定则为LLM_MODELS
 FSCHAT_MODEL_WORKERS = {
-    "Qwen-14B-Chat": {
-        "port": 11009
-    },
-    "Baichuan2-13B-Chat": {
-        "port": 21010
-    },
     # 所有模型共用的默认配置，可在模型专项配置中进行覆盖。
     "default": {
         "host": DEFAULT_BIND_HOST,
@@ -136,7 +130,13 @@ FSCHAT_MODEL_WORKERS = {
     },
     "azure-api": {
         "port": 11008,
-    }
+    },
+    "Qwen-14B-Chat": {
+        "port": 11009
+    },
+    "Baichuan2-13B-Chat": {
+        "port": 11010
+    },
 }
 
 # fastchat multi model worker server
