@@ -45,7 +45,7 @@ FSCHAT_OPENAI_API = {
 # 在启动startup.py时，可用通过`--model-name xxxx yyyy`指定模型，不指定则为LLM_MODELS
 FSCHAT_MODEL_WORKERS = {
     "Qwen-14B-Chat": {
-        "port": 21009
+        "port": 11009
     },
     "Baichuan2-13B-Chat": {
         "port": 21010
@@ -53,7 +53,7 @@ FSCHAT_MODEL_WORKERS = {
     # 所有模型共用的默认配置，可在模型专项配置中进行覆盖。
     "default": {
         "host": DEFAULT_BIND_HOST,
-        "port": 20002,
+        "port": 10002,
         "device": LLM_DEVICE,
         # False,'vllm',使用的推理加速框架,使用vllm如果出现HuggingFace通信问题，参见doc/FAQ
         # vllm对一些模型支持还不成熟，暂时默认关闭
@@ -114,28 +114,28 @@ FSCHAT_MODEL_WORKERS = {
 
     #以下配置可以不用修改，在model_config中设置启动的模型
     "zhipu-api": {
-        "port": 21001,
+        "port": 11001,
     },
     "minimax-api": {
-        "port": 21002,
+        "port": 11002,
     },
     "xinghuo-api": {
-        "port": 21003,
+        "port": 11003,
     },
     "qianfan-api": {
-        "port": 21004,
+        "port": 11004,
     },
     "fangzhou-api": {
-        "port": 21005,
+        "port": 11005,
     },
     "qwen-api": {
-        "port": 21006,
+        "port": 11006,
     },
     "baichuan-api": {
-        "port": 21007,
+        "port": 11007,
     },
     "azure-api": {
-        "port": 21008,
+        "port": 11008,
     }
 }
 

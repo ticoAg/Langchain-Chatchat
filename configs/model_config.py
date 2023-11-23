@@ -24,7 +24,7 @@ LLM_MODELS = ["chatglm2-6b", "Qwen-14B-Chat", "Baichuan2-13B-Chat"]
 Agent_MODEL = None
 
 # LLM 运行设备。设为"auto"会自动检测，也可手动设定为"cuda","mps","cpu"其中之一。
-LLM_DEVICE = "auto"
+LLM_DEVICE = "cuda"
 
 # 历史对话轮数
 HISTORY_LEN = 3
