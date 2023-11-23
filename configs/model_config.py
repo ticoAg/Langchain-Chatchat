@@ -18,7 +18,7 @@ EMBEDDING_MODEL_OUTPUT_PATH = "output"
 
 # 要运行的 LLM 名称，可以包括本地模型和在线模型。
 # 第一个将作为 API 和 WEBUI 的默认模型
-LLM_MODELS = ["chatglm2-6b", "Qwen-14B-Chat", "Baichuan2-13B-Chat"]
+LLM_MODELS = ["Qwen-14B-Chat", "Baichuan2-13B-Chat"]
 
 # AgentLM模型的名称 (可以不指定，指定之后就锁定进入Agent之后的Chain的模型，不指定就是LLM_MODELS[0])
 Agent_MODEL = None
