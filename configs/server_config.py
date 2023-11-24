@@ -137,7 +137,7 @@ FSCHAT_MODEL_WORKERS = {
         "device": LLM_DEVICE,
         # False,'vllm',使用的推理加速框架,使用vllm如果出现HuggingFace通信问题，参见doc/FAQ
         # vllm对一些模型支持还不成熟，暂时默认关闭
-        "infer_turbo": 'vllm',
+        "infer_turbo": False,
 
         # model_worker多卡加载需要配置的参数
         # "gpus": None, # 使用的GPU，以str的格式指定，如"0,1"，如失效请使用CUDA_VISIBLE_DEVICES="0,1"等形式指定
@@ -175,7 +175,7 @@ FSCHAT_MODEL_WORKERS = {
         # 'tensor_parallel_size':1,
         # 'block_size':16,
         # 'swap_space':4 , # GiB
-        'gpu_memory_utilization':0.5,
+        # 'gpu_memory_utilization':0.5,
         # 'max_num_batched_tokens':2560,
         # 'max_num_seqs':256,
         # 'disable_log_stats':False,
