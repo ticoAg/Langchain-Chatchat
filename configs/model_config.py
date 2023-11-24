@@ -20,7 +20,7 @@ EMBEDDING_MODEL_OUTPUT_PATH = "output"
 # 第一个将作为 API 和 WEBUI 的默认模型
 LLM_MODELS = [
     "openai-api",
-    "Qwen-14B-Chat"
+    "Qwen-14B-Chat",
     # "chatglm2-6b"
     # "Qwen-14B-Chat", 
     "Baichuan2-13B-Chat"
