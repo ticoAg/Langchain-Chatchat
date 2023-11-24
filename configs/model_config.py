@@ -23,7 +23,7 @@ LLM_MODELS = [
     "Qwen-14B-Chat"
     # "chatglm2-6b"
     # "Qwen-14B-Chat", 
-    # "Baichuan2-13B-Chat"
+    "Baichuan2-13B-Chat"
 ]
 
 # AgentLM模型的名称 (可以不指定，指定之后就锁定进入Agent之后的Chain的模型，不指定就是LLM_MODELS[0])
@@ -42,8 +42,8 @@ MAX_TOKENS = None
 TEMPERATURE = 0.7
 TOP_P = 0.95 # ChatOpenAI暂不支持该参数
 
-# api_base_url = "http://10.228.67.99:26921/v1"
-api_base_url = "http://127.0.0.1:26921/v1"
+api_base_url = "http://10.228.67.99:26921/v1"
+# api_base_url = "http://127.0.0.1:26921/v1"
 
 ONLINE_LLM_MODEL = {
     # 线上模型。请在server_config中为每个在线API设置不同的端口
@@ -52,11 +52,11 @@ ONLINE_LLM_MODEL = {
     #     "api_base_url": api_base_url,
     #     "api_key": "your OPENAI_API_KEY",
     # },
-    # "Baichuan2-13B-Chat": {
-    #     "model_name": "Baichuan2-13B-Chat",
-    #     "api_base_url": api_base_url,
-    #     "api_key": "your OPENAI_API_KEY",
-    # },
+    "Baichuan2-13B-Chat": {
+        "model_name": "Baichuan2-13B-Chat",
+        "api_base_url": api_base_url,
+        "api_key": "your OPENAI_API_KEY",
+    },
     "openai-api": {
         "model_name": "gpt-3.5-turbo",
         "api_base_url": "https://api.openai.com/v1",

@@ -186,9 +186,9 @@ FSCHAT_MODEL_WORKERS = {
         # 'engine_use_ray': False,
         # 'disable_log_requests': False
     },
-    # "Baichuan2-13B-Chat": {
-    #     "port": 11010
-    # },
+    "Baichuan2-13B-Chat": {
+        "port": 11010
+    },
 }
 
 # fastchat multi model worker server
