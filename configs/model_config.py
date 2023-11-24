@@ -42,8 +42,8 @@ MAX_TOKENS = None
 TEMPERATURE = 0.7
 TOP_P = 0.95 # ChatOpenAI暂不支持该参数
 
-api_base_url = "http://10.228.67.99:26921/v1"
-# api_base_url = "http://127.0.0.1:26921/v1"
+# api_base_url = "http://10.228.67.99:26921/v1"
+api_base_url = "http://127.0.0.1:26921/v1"
 
 ONLINE_LLM_MODEL = {
     # 线上模型。请在server_config中为每个在线API设置不同的端口
