@@ -20,7 +20,8 @@ EMBEDDING_MODEL_OUTPUT_PATH = "output"
 # 第一个将作为 API 和 WEBUI 的默认模型
 LLM_MODELS = [
     "openai-api",
-    "chatglm2-6b"
+    "Qwen-14B-Chat"
+    # "chatglm2-6b"
     # "Qwen-14B-Chat", 
     # "Baichuan2-13B-Chat"
 ]
@@ -57,9 +58,8 @@ ONLINE_LLM_MODEL = {
     #     "api_key": "your OPENAI_API_KEY",
     # },
     "openai-api": {
-        "model_name": "Qwen-14B-Chat",
-        # "api_base_url": "https://api.openai.com/v1",
-        "api_base_url": api_base_url,
+        "model_name": "gpt-3.5-turbo",
+        "api_base_url": "https://api.openai.com/v1",
         "api_key": "",
         "openai_proxy": "",
     },
@@ -214,7 +214,8 @@ MODEL_PATH = {
         "Qwen-7B": "Qwen/Qwen-7B",
         "Qwen-14B": "Qwen/Qwen-14B",
         "Qwen-7B-Chat": "Qwen/Qwen-7B-Chat",
-        "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat",
+        # "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat",
+        "Qwen-14B-Chat":"/home/songhaoyang/.cache/modelscope/hub/qwen/Qwen-14B-Chat/",
         "Qwen-14B-Chat-Int8": "Qwen/Qwen-14B-Chat-Int8",  # 确保已经安装了auto-gptq optimum flash-attn
         "Qwen-14B-Chat-Int4": "Qwen/Qwen-14B-Chat-Int4",  # 确保已经安装了auto-gptq optimum flash-attn
     },
@@ -268,7 +269,8 @@ VLLM_MODEL_DICT = {
     "Qwen-7B": "Qwen/Qwen-7B",
     "Qwen-14B": "Qwen/Qwen-14B",
     "Qwen-7B-Chat": "Qwen/Qwen-7B-Chat",
-    "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat",
+    # "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat",
+    "Qwen-14B-Chat":"/home/songhaoyang/.cache/modelscope/hub/qwen/Qwen-14B-Chat/",
 
     "agentlm-7b": "THUDM/agentlm-7b",
     "agentlm-13b": "THUDM/agentlm-13b",
