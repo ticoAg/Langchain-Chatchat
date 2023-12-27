@@ -1,40 +1,33 @@
 import operator
-from abc import ABC, abstractmethod
-
 import os
+from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Dict, List, Optional, Union
+
 import numpy as np
-from langchain.embeddings.base import Embeddings
 from langchain.docstore.document import Document
+from langchain.embeddings.base import Embeddings
 
-from server.db.repository.knowledge_base_repository import (
-    add_kb_to_db, delete_kb_from_db, list_kbs_from_db, kb_exists,
-    load_kb_from_db, get_kb_detail,
-)
-from server.db.repository.knowledge_file_repository import (
-    add_file_to_db, delete_file_from_db, delete_files_from_db, file_exists_in_db,
-    count_files_from_db, list_files_from_db, get_file_detail, delete_file_from_db,
-    list_docs_from_db,
-)
-
-from configs import (kbs_config, VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD,
-                     EMBEDDING_MODEL, KB_INFO)
-from server.knowledge_base.utils import (
-    get_kb_path, get_doc_path, KnowledgeFile,
-    list_kbs_from_folder, list_files_from_folder,
-)
-
-from typing import List, Union, Dict, Optional
-
-from server.embeddings_api import embed_texts
-from server.embeddings_api import embed_documents
+from configs import EMBEDDING_MODEL, KB_INFO, SCORE_THRESHOLD, VECTOR_SEARCH_TOP_K, kbs_config
+from server.db.repository.knowledge_base_repository import (add_kb_to_db, delete_kb_from_db,
+                                                            get_kb_detail, kb_exists,
+                                                            list_kbs_from_db, load_kb_from_db)
+from server.db.repository.knowledge_file_repository import (add_file_to_db, count_files_from_db,
+                                                            delete_file_from_db,
+                                                            delete_files_from_db, file_exists_in_db,
+                                                            get_file_detail, list_docs_from_db,
+                                                            list_files_from_db)
+from server.embeddings_api import embed_documents, embed_texts
 from server.knowledge_base.model.kb_document_model import DocumentWithVSId
+from server.knowledge_base.utils import (KnowledgeFile, get_doc_path, get_kb_path,
+                                         list_files_from_folder, list_kbs_from_folder)
 
 
 def normalize(embeddings: List[List[float]]) -> np.ndarray:
     '''
     sklearn.preprocessing.normalize 的替代（使用 L2），避免安装 scipy, scikit-learn
     '''
+    print(embeddings)
     norm = np.linalg.norm(embeddings, axis=1)
     norm = np.reshape(norm, (norm.shape[0], 1))
     norm = np.tile(norm, (1, len(embeddings[0])))
