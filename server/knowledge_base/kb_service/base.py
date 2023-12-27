@@ -388,7 +388,6 @@ class EmbeddingsFunAdapter(Embeddings):
         self.embed_model = embed_model
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        print(texts)
         embeddings = embed_texts(texts=texts, embed_model=self.embed_model, to_query=False).data
         return normalize(embeddings).tolist()
 
