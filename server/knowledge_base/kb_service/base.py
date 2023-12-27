@@ -27,7 +27,7 @@ def normalize(embeddings: List[List[float]]) -> np.ndarray:
     '''
     sklearn.preprocessing.normalize 的替代（使用 L2），避免安装 scipy, scikit-learn
     '''
-    print(embeddings)
+    print(f"embeddings shape {embeddings}")
     norm = np.linalg.norm(embeddings, axis=1)
     norm = np.reshape(norm, (norm.shape[0], 1))
     norm = np.tile(norm, (1, len(embeddings[0])))
@@ -388,6 +388,7 @@ class EmbeddingsFunAdapter(Embeddings):
         self.embed_model = embed_model
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        print(texts)
         embeddings = embed_texts(texts=texts, embed_model=self.embed_model, to_query=False).data
         return normalize(embeddings).tolist()
 
