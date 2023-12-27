@@ -9,7 +9,7 @@ MODEL_ROOT_PATH = ""
 EMBEDDING_MODEL = "bge-large-zh"
 
 # Embedding 模型运行设备。设为"auto"会自动检测，也可手动设定为"cuda","mps","cpu"其中之一。
-EMBEDDING_DEVICE = "auto"
+EMBEDDING_DEVICE = "cuda:5"
 
 # 如果需要在 EMBEDDING_MODEL 中增加自定义的关键字时配置
 EMBEDDING_KEYWORD_FILE = "keywords.txt"
