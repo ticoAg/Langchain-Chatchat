@@ -159,7 +159,7 @@ MODEL_PATH = {
         "m3e-large": "moka-ai/m3e-large",
         "bge-small-zh": "BAAI/bge-small-zh",
         "bge-base-zh": "BAAI/bge-base-zh",
-        "bge-large-zh": "BAAI/bge-large-zh",
+        "bge-large-zh": "/data/modelscope/hub/AI-ModelScope/bge-large-zh",
         "bge-large-zh-noinstruct": "BAAI/bge-large-zh-noinstruct",
         "bge-base-zh-v1.5": "BAAI/bge-base-zh-v1.5",
         "bge-large-zh-v1.5": "BAAI/bge-large-zh-v1.5",
