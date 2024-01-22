@@ -47,7 +47,7 @@ ONLINE_LLM_MODEL = {
     "Qwen-14B-Chat": {
         "model_name": "Qwen-14B-Chat",
         "api_base_url": "http://10.228.67.99:26921/v1",
-        "api_key": "langchain-chatchat",
+        "api_key": "sk-laikang-aihealthmanager-test",
     },
 
     "openai-api": {
