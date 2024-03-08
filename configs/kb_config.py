@@ -3,7 +3,7 @@ import os
 # 默认使用的知识库
 DEFAULT_KNOWLEDGE_BASE = "samples"
 
-# 默认向量库/全文检索引擎类型。可选：faiss, milvus(离线) & zilliz(在线), pgvector,全文检索引擎es
+# 默认向量库/全文检索引擎类型。可选：faiss, milvus(离线) & zilliz(在线), pgvector, chromadb 全文检索引擎es
 DEFAULT_VS_TYPE = "faiss"
 
 # 缓存向量库数量（针对FAISS）
@@ -21,8 +21,9 @@ OVERLAP_SIZE = 50
 # 知识库匹配向量数量
 VECTOR_SEARCH_TOP_K = 3
 
-# 知识库匹配相关度阈值，取值范围在0-1之间，SCORE越小，相关度越高，取到1相当于不筛选，建议设置在0.5左右
-SCORE_THRESHOLD = 1
+# 知识库匹配的距离阈值，一般取值范围在0-1之间，SCORE越小，距离越小从而相关度越高。
+# 但有用户报告遇到过匹配分值超过1的情况，为了兼容性默认设为1，在WEBUI中调整范围为0-2
+SCORE_THRESHOLD = 1.0
 
 # 默认搜索引擎。可选：bing, duckduckgo, metaphor
 DEFAULT_SEARCH_ENGINE = "duckduckgo"
@@ -47,12 +48,17 @@ BING_SUBSCRIPTION_KEY = ""
 # metaphor搜索需要KEY
 METAPHOR_API_KEY = ""
 
+# 心知天气 API KEY，用于天气Agent。申请：https://www.seniverse.com/
+SENIVERSE_API_KEY = ""
 
 # 是否开启中文标题加强，以及标题增强的相关配置
 # 通过增加标题判断，判断哪些文本为标题，并在metadata中进行标记；
 # 然后将文本与往上一级的标题进行拼合，实现文本信息的增强。
 ZH_TITLE_ENHANCE = False
 
+# PDF OCR 控制：只对宽高超过页面一定比例（图片宽/页面宽，图片高/页面高）的图片进行 OCR。
+# 这样可以避免 PDF 中一些小图片的干扰，提高非扫描版 PDF 处理速度
+PDF_OCR_THRESHOLD = (0.6, 0.6)
 
 # 每个知识库的初始化介绍，用于在初始化知识库时显示和Agent调用，没写则没有介绍，不会被Agent调用。
 KB_INFO = {
@@ -100,7 +106,12 @@ kbs_config = {
         "index_name": "test_index",
         "user": "",
         "password": ""
-    }
+    },
+    "milvus_kwargs":{
+        "search_params":{"metric_type": "L2"}, #在此处增加search_params
+        "index_params":{"metric_type": "L2","index_type": "HNSW"} # 在此处增加index_params
+    },
+    "chromadb": {}
 }
 
 # TextSplitter配置项，如果你不明白其中的含义，就不要修改。

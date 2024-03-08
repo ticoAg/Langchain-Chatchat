@@ -8,18 +8,6 @@ import numpy as np
 from langchain.docstore.document import Document
 from langchain.embeddings.base import Embeddings
 
-<<<<<<< HEAD
-from configs import EMBEDDING_MODEL, KB_INFO, SCORE_THRESHOLD, VECTOR_SEARCH_TOP_K, kbs_config
-from server.db.repository.knowledge_base_repository import (add_kb_to_db, delete_kb_from_db,
-                                                            get_kb_detail, kb_exists,
-                                                            list_kbs_from_db, load_kb_from_db)
-from server.db.repository.knowledge_file_repository import (add_file_to_db, count_files_from_db,
-                                                            delete_file_from_db,
-                                                            delete_files_from_db, file_exists_in_db,
-                                                            get_file_detail, list_docs_from_db,
-                                                            list_files_from_db)
-from server.embeddings_api import embed_documents, embed_texts
-=======
 from server.db.repository.knowledge_base_repository import (
     add_kb_to_db, delete_kb_from_db, list_kbs_from_db, kb_exists,
     load_kb_from_db, get_kb_detail,
@@ -40,7 +28,6 @@ from server.knowledge_base.utils import (
 from typing import List, Union, Dict, Optional, Tuple
 
 from server.embeddings_api import embed_texts, aembed_texts, embed_documents
->>>>>>> master
 from server.knowledge_base.model.kb_document_model import DocumentWithVSId
 from server.knowledge_base.utils import (KnowledgeFile, get_doc_path, get_kb_path,
                                          list_files_from_folder, list_kbs_from_folder)

@@ -1,5 +1,4 @@
 import sys
-
 from configs.model_config import LLM_DEVICE
 
 # httpx 请求默认超时时间（秒）。如果加载模型或对话较慢，出现超时错误，可以适当加大该值。
@@ -11,7 +10,8 @@ OPEN_CROSS_DOMAIN = False
 
 # 各服务器默认绑定host。如改为"0.0.0.0"需要修改下方所有XX_SERVER的host
 # DEFAULT_BIND_HOST = "0.0.0.0" if sys.platform != "win32" else "127.0.0.1"
-DEFAULT_BIND_HOST = "10.228.67.99"
+DEFAULT_BIND_HOST = "127.0.0.1" # 10.228.67.99
+
 
 # webui.py server
 WEBUI_SERVER = {
@@ -42,8 +42,6 @@ FSCHAT_MODEL_WORKERS = {
         "device": LLM_DEVICE,
         # False,'vllm',使用的推理加速框架,使用vllm如果出现HuggingFace通信问题，参见doc/FAQ
         # vllm对一些模型支持还不成熟，暂时默认关闭
-        # fschat=0.2.33的代码有bug, 如需使用，源码修改fastchat.server.vllm_worker，
-        # 将103行中sampling_params = SamplingParams的参数stop=list(stop)修改为stop= [i for i in stop if i!=""]
         "infer_turbo": False,
 
         # model_worker多卡加载需要配置的参数
@@ -94,53 +92,48 @@ FSCHAT_MODEL_WORKERS = {
         # 'disable_log_requests': False
 
     },
-    # 可以如下示例方式更改默认配置
-    # "Qwen-1_8B-Chat": { # 使用default中的IP和端口
-    #    "device": "cpu",
-    # },
-    # "chatglm3-6b": {  # 使用default中的IP和端口
-    #     "device": "cuda",
-    # },
-
+    "chatglm3-6b": {
+        "device": "cuda",
+    },
+    "Qwen1.5-0.5B-Chat": {
+        "device": "cuda",
+    },
     # 以下配置可以不用修改，在model_config中设置启动的模型
-    # "zhipu-api": {
-    #     "port": 21001,
-    # },
-    # "minimax-api": {
-    #     "port": 21002,
-    # },
-    # "xinghuo-api": {
-    #     "port": 21003,
-    # },
-    # "qianfan-api": {
-    #     "port": 21004,
-    # },
-    # "fangzhou-api": {
-    #     "port": 21005,
-    # },
-    # "qwen-api": {
-    #     "port": 21006,
-    # },
-    # "baichuan-api": {
-    #     "port": 21007,
-    # },
-    # "azure-api": {
-    #     "port": 21008,
-    # },
-    # "tiangong-api": {
-    #     "port": 21009,
-    # },
-    "Qwen-14B-Chat": {
+    "zhipu-api": {
+        "port": 21001,
+    },
+    "minimax-api": {
+        "port": 21002,
+    },
+    "xinghuo-api": {
+        "port": 21003,
+    },
+    "qianfan-api": {
+        "port": 21004,
+    },
+    "fangzhou-api": {
+        "port": 21005,
+    },
+    "qwen-api": {
+        "port": 21006,
+    },
+    "baichuan-api": {
+        "port": 21007,
+    },
+    "azure-api": {
+        "port": 21008,
+    },
+    "tiangong-api": {
+        "port": 21009,
+    },
+    "gemini-api": {
+        "port": 21010,
+    },
+    "Qwen1.5-72B-Chat": {
         "port": 10003
     }
 }
 
-# fastchat multi model worker server
-FSCHAT_MULTI_MODEL_WORKERS = {
-    # TODO:
-}
-
-# fastchat controller server
 FSCHAT_CONTROLLER = {
     "host": DEFAULT_BIND_HOST,
     "port": 10001,
