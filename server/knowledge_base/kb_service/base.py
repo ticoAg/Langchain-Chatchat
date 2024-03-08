@@ -8,6 +8,7 @@ import numpy as np
 from langchain.docstore.document import Document
 from langchain.embeddings.base import Embeddings
 
+<<<<<<< HEAD
 from configs import EMBEDDING_MODEL, KB_INFO, SCORE_THRESHOLD, VECTOR_SEARCH_TOP_K, kbs_config
 from server.db.repository.knowledge_base_repository import (add_kb_to_db, delete_kb_from_db,
                                                             get_kb_detail, kb_exists,
@@ -18,6 +19,28 @@ from server.db.repository.knowledge_file_repository import (add_file_to_db, coun
                                                             get_file_detail, list_docs_from_db,
                                                             list_files_from_db)
 from server.embeddings_api import embed_documents, embed_texts
+=======
+from server.db.repository.knowledge_base_repository import (
+    add_kb_to_db, delete_kb_from_db, list_kbs_from_db, kb_exists,
+    load_kb_from_db, get_kb_detail,
+)
+from server.db.repository.knowledge_file_repository import (
+    add_file_to_db, delete_file_from_db, delete_files_from_db, file_exists_in_db,
+    count_files_from_db, list_files_from_db, get_file_detail, delete_file_from_db,
+    list_docs_from_db,
+)
+
+from configs import (kbs_config, VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD,
+                     EMBEDDING_MODEL, KB_INFO)
+from server.knowledge_base.utils import (
+    get_kb_path, get_doc_path, KnowledgeFile,
+    list_kbs_from_folder, list_files_from_folder,
+)
+
+from typing import List, Union, Dict, Optional, Tuple
+
+from server.embeddings_api import embed_texts, aembed_texts, embed_documents
+>>>>>>> master
 from server.knowledge_base.model.kb_document_model import DocumentWithVSId
 from server.knowledge_base.utils import (KnowledgeFile, get_doc_path, get_kb_path,
                                          list_files_from_folder, list_kbs_from_folder)
@@ -40,6 +63,7 @@ class SupportedVSType:
     ZILLIZ = 'zilliz'
     PG = 'pg'
     ES = 'es'
+    CHROMADB = 'chromadb'
 
 
 class KBService(ABC):
@@ -114,8 +138,9 @@ class KBService(ABC):
             for doc in docs:
                 try:
                     source = doc.metadata.get("source", "")
-                    rel_path = Path(source).relative_to(self.doc_path)
-                    doc.metadata["source"] = str(rel_path.as_posix().strip("/"))
+                    if os.path.isabs(source):
+                        rel_path = Path(source).relative_to(self.doc_path)
+                        doc.metadata["source"] = str(rel_path.as_posix().strip("/"))
                 except Exception as e:
                     print(f"cannot convert absolute path ({source}) to relative path. error is : {e}")
             self.delete_doc(kb_file)
@@ -169,12 +194,31 @@ class KBService(ABC):
                     query: str,
                     top_k: int = VECTOR_SEARCH_TOP_K,
                     score_threshold: float = SCORE_THRESHOLD,
-                    ):
+                    ) ->List[Document]:
         docs = self.do_search(query, top_k, score_threshold)
         return docs
 
     def get_doc_by_ids(self, ids: List[str]) -> List[Document]:
         return []
+
+    def del_doc_by_ids(self, ids: List[str]) -> bool:
+        raise NotImplementedError
+
+    def update_doc_by_ids(self, docs: Dict[str, Document]) -> bool:
+        '''
+        传入参数为： {doc_id: Document, ...}
+        如果对应 doc_id 的值为 None，或其 page_content 为空，则删除该文档
+        '''
+        self.del_doc_by_ids(list(docs.keys()))
+        docs = []
+        ids = []
+        for k, v in docs.items():
+            if not v or not v.page_content.strip():
+                continue
+            ids.append(k)
+            docs.append(v)
+        self.do_add_doc(docs=docs, ids=ids)
+        return True
 
     def list_docs(self, file_name: str = None, metadata: Dict = {}) -> List[DocumentWithVSId]:
         '''
@@ -183,10 +227,10 @@ class KBService(ABC):
         doc_infos = list_docs_from_db(kb_name=self.kb_name, file_name=file_name, metadata=metadata)
         docs = []
         for x in doc_infos:
-            doc_info_s = self.get_doc_by_ids([x["id"]])
-            if doc_info_s is not None and doc_info_s != []:
+            doc_info = self.get_doc_by_ids([x["id"]])[0]
+            if doc_info is not None:
                 # 处理非空的情况
-                doc_with_id = DocumentWithVSId(**doc_info_s[0].dict(), id=x["id"])
+                doc_with_id = DocumentWithVSId(**doc_info.dict(), id=x["id"])
                 docs.append(doc_with_id)
             else:
                 # 处理空的情况
@@ -233,7 +277,7 @@ class KBService(ABC):
                   query: str,
                   top_k: int,
                   score_threshold: float,
-                  ) -> List[Document]:
+                  ) -> List[Tuple[Document, float]]:
         """
         搜索知识库子类实自己逻辑
         """
@@ -242,6 +286,7 @@ class KBService(ABC):
     @abstractmethod
     def do_add_doc(self,
                    docs: List[Document],
+                   **kwargs,
                    ) -> List[Dict]:
         """
         向知识库添加文档子类实自己逻辑
@@ -286,11 +331,15 @@ class KBServiceFactory:
             from server.knowledge_base.kb_service.zilliz_kb_service import ZillizKBService
             return ZillizKBService(kb_name, embed_model=embed_model)
         elif SupportedVSType.DEFAULT == vector_store_type:
+            from server.knowledge_base.kb_service.milvus_kb_service import MilvusKBService
             return MilvusKBService(kb_name,
                                    embed_model=embed_model)  # other milvus parameters are set in model_config.kbs_config
         elif SupportedVSType.ES == vector_store_type:
             from server.knowledge_base.kb_service.es_kb_service import ESKBService
             return ESKBService(kb_name, embed_model=embed_model)
+        elif SupportedVSType.CHROMADB == vector_store_type:
+            from server.knowledge_base.kb_service.chromadb_kb_service import ChromaKBService
+            return ChromaKBService(kb_name, embed_model=embed_model)
         elif SupportedVSType.DEFAULT == vector_store_type:  # kb_exists of default kbservice is False, to make validation easier.
             from server.knowledge_base.kb_service.default_kb_service import DefaultKBService
             return DefaultKBService(kb_name)
@@ -364,12 +413,13 @@ def get_kb_file_details(kb_name: str) -> List[Dict]:
             "in_folder": True,
             "in_db": False,
         }
+    lower_names = {x.lower(): x for x in result}
     for doc in files_in_db:
         doc_detail = get_file_detail(kb_name, doc)
         if doc_detail:
             doc_detail["in_db"] = True
-            if doc in result:
-                result[doc].update(doc_detail)
+            if doc.lower() in lower_names:
+                result[lower_names[doc.lower()]].update(doc_detail)
             else:
                 doc_detail["in_folder"] = False
                 result[doc] = doc_detail
@@ -397,12 +447,16 @@ class EmbeddingsFunAdapter(Embeddings):
         normalized_query_embed = normalize(query_embed_2d)
         return normalized_query_embed[0].tolist()  # 将结果转换为一维数组并返回
 
-    # TODO: 暂不支持异步
-    # async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
-    #     return normalize(await self.embeddings.aembed_documents(texts))
+    async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
+        embeddings = (await aembed_texts(texts=texts, embed_model=self.embed_model, to_query=False)).data
+        return normalize(embeddings).tolist()
 
-    # async def aembed_query(self, text: str) -> List[float]:
-    #     return normalize(await self.embeddings.aembed_query(text))
+    async def aembed_query(self, text: str) -> List[float]:
+        embeddings = (await aembed_texts(texts=[text], embed_model=self.embed_model, to_query=True)).data
+        query_embed = embeddings[0]
+        query_embed_2d = np.reshape(query_embed, (1, -1))  # 将一维数组转换为二维数组
+        normalized_query_embed = normalize(query_embed_2d)
+        return normalized_query_embed[0].tolist()  # 将结果转换为一维数组并返回
 
 
 def score_threshold_process(score_threshold, k, docs):

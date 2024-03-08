@@ -16,18 +16,18 @@ class ZillizKBService(KBService):
         from pymilvus import Collection
         return Collection(zilliz_name)
 
-    # def save_vector_store(self):
-    #     if self.zilliz.col:
-    #         self.zilliz.col.flush()
-
     def get_doc_by_ids(self, ids: List[str]) -> List[Document]:
         result = []
         if self.zilliz.col:
+            # ids = [int(id) for id in ids]  # for zilliz if needed #pr 2725
             data_list = self.zilliz.col.query(expr=f'pk in {ids}', output_fields=["*"])
             for data in data_list:
                 text = data.pop("text")
                 result.append(Document(page_content=text, metadata=data))
         return result
+
+    def del_doc_by_ids(self, ids: List[str]) -> bool:
+        self.zilliz.col.delete(expr=f'pk in {ids}')
 
     @staticmethod
     def search(zilliz_name, content, limit=3):
@@ -47,8 +47,7 @@ class ZillizKBService(KBService):
     def _load_zilliz(self):
         zilliz_args = kbs_config.get("zilliz")
         self.zilliz = Zilliz(embedding_function=EmbeddingsFunAdapter(self.embed_model),
-                            collection_name=self.kb_name, connection_args=zilliz_args)
-
+                             collection_name=self.kb_name, connection_args=zilliz_args)
 
     def do_init(self):
         self._load_zilliz()
@@ -92,9 +91,7 @@ class ZillizKBService(KBService):
 
 
 if __name__ == '__main__':
-
     from server.db.base import Base, engine
 
     Base.metadata.create_all(bind=engine)
     zillizService = ZillizKBService("test")
-

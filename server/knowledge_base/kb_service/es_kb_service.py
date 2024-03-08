@@ -1,10 +1,3 @@
-#!/user/bin/env python3
-"""
-File_Name: es_kb_service.py
-Author: TangGuoLiang
-Email: 896165277@qq.com
-Created: 2023-09-05
-"""
 from typing import List
 import os
 import shutil
@@ -13,8 +6,9 @@ from langchain.schema import Document
 from langchain.vectorstores.elasticsearch import ElasticsearchStore
 from configs import KB_ROOT_PATH, EMBEDDING_MODEL, EMBEDDING_DEVICE, CACHED_VS_NUM
 from server.knowledge_base.kb_service.base import KBService, SupportedVSType
+from server.knowledge_base.utils import KnowledgeFile
 from server.utils import load_local_embeddings
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch,BadRequestError
 from configs import logger
 from configs import kbs_config
 
@@ -22,11 +16,12 @@ class ESKBService(KBService):
 
     def do_init(self):
         self.kb_path = self.get_kb_path(self.kb_name)
-        self.index_name = self.kb_path.split("/")[-1]
+        self.index_name = os.path.split(self.kb_path)[-1]
         self.IP = kbs_config[self.vs_type()]['host']
         self.PORT = kbs_config[self.vs_type()]['port']
         self.user = kbs_config[self.vs_type()].get("user",'')
         self.password = kbs_config[self.vs_type()].get("password",'')
+        self.dims_length = kbs_config[self.vs_type()].get("dims_length",None)
         self.embeddings_model = load_local_embeddings(self.embed_model, EMBEDDING_DEVICE)
         try:
             # ES python客户端连接（仅连接）
@@ -36,11 +31,27 @@ class ESKBService(KBService):
             else:
                 logger.warning("ES未配置用户名和密码")
                 self.es_client_python = Elasticsearch(f"http://{self.IP}:{self.PORT}")
-            self.es_client_python.indices.create(index=self.index_name)
         except ConnectionError:
             logger.error("连接到 Elasticsearch 失败！")
+            raise ConnectionError
         except Exception as e:
             logger.error(f"Error 发生 : {e}")
+            raise e
+        try:
+            # 首先尝试通过es_client_python创建
+            mappings = {
+                "properties": {
+                    "dense_vector": {
+                        "type": "dense_vector",
+                        "dims": self.dims_length,
+                        "index": True
+                    }
+                }
+            }
+            self.es_client_python.indices.create(index=self.index_name, mappings=mappings)
+        except BadRequestError as e:
+            logger.error("创建索引失败,重新")
+            logger.error(e)
 
         try:
             # langchain ES 连接、创建索引
@@ -64,10 +75,24 @@ class ESKBService(KBService):
                     embedding=self.embeddings_model,
                 )
         except ConnectionError:
-            print("### 连接到 Elasticsearch 失败！")
-            logger.error("### 连接到 Elasticsearch 失败！")
+            print("### 初始化 Elasticsearch 失败！")
+            logger.error("### 初始化 Elasticsearch 失败！")
+            raise ConnectionError
         except Exception as e:
             logger.error(f"Error 发生 : {e}")
+            raise e
+        try:
+            # 尝试通过db_init创建索引
+            self.db_init._create_index_if_not_exists(
+                                                     index_name=self.index_name,
+                                                     dims_length=self.dims_length
+                                                     )
+        except Exception as e:
+            logger.error("创建索引失败...")
+            logger.error(e)
+            # raise e
+
+
 
     @staticmethod
     def get_kb_path(knowledge_base_name: str):
@@ -130,6 +155,28 @@ class ESKBService(KBService):
                                          k=top_k)
         return docs
 
+    def get_doc_by_ids(self, ids: List[str]) -> List[Document]:
+        results = []
+        for doc_id in ids:
+            try:
+                response = self.es_client_python.get(index=self.index_name, id=doc_id)
+                source = response["_source"]
+                # Assuming your document has "text" and "metadata" fields
+                text = source.get("context", "")
+                metadata = source.get("metadata", {})
+                results.append(Document(page_content=text, metadata=metadata))
+            except Exception as e:
+                logger.error(f"Error retrieving document from Elasticsearch! {e}")
+        return results
+
+    def del_doc_by_ids(self, ids: List[str]) -> bool:
+        for doc_id in ids:
+            try:
+                self.es_client_python.delete(index=self.index_name,
+                                            id=doc_id,
+                                            refresh=True)
+            except Exception as e:
+                logger.error(f"ES Docs Delete Error! {e}")
 
     def do_delete_doc(self, kb_file, **kwargs):
         if self.es_client_python.indices.exists(index=self.index_name):
@@ -153,7 +200,7 @@ class ESKBService(KBService):
                                                      id=doc_id,
                                                      refresh=True)
                     except Exception as e:
-                        logger.error("ES Docs Delete Error!")
+                        logger.error(f"ES Docs Delete Error! {e}")
 
             # self.db_init.delete(ids=delete_list)
             #self.es_client_python.indices.refresh(index=self.index_name)
@@ -167,17 +214,21 @@ class ESKBService(KBService):
         # 获取 id 和 source , 格式：[{"id": str, "metadata": dict}, ...]
         print("写入数据成功.")
         print("*"*100)
-        
+
         if self.es_client_python.indices.exists(index=self.index_name):
             file_path = docs[0].metadata.get("source")
             query = {
                 "query": {
                     "term": {
                         "metadata.source.keyword": file_path
+                    },
+                    "term": {
+                        "_index": self.index_name
                     }
                 }
             }
-            search_results = self.es_client_python.search(body=query)
+            # 注意设置size，默认返回10个。
+            search_results = self.es_client_python.search(body=query, size=50)
             if len(search_results["hits"]["hits"]) == 0:
                 raise ValueError("召回元素个数为0")
         info_docs = [{"id":hit["_id"], "metadata": hit["_source"]["metadata"]} for hit in search_results["hits"]["hits"]]
@@ -197,7 +248,12 @@ class ESKBService(KBService):
             shutil.rmtree(self.kb_path)
 
 
-
+if __name__ == '__main__':
+    esKBService = ESKBService("test")
+    #esKBService.clear_vs()
+    #esKBService.create_kb()
+    esKBService.add_doc(KnowledgeFile(filename="README.md", knowledge_base_name="test"))
+    print(esKBService.search_docs("如何启动api服务"))
 
 
 
