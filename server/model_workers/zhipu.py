@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 
 import httpx
+import requests
 from fastchat.conversation import Conversation
 from httpx_sse import EventSource
 
@@ -39,10 +40,12 @@ def generate_token(apikey: str, exp_seconds: int):
 
 
 class ChatGLMWorker(ApiModelWorker):
+    DEFAULT_EMBED_MODEL = "embedding-2"
+    
     def __init__(
             self,
             *,
-            model_names: List[str] = ["zhipu-api"],
+            model_names: List[str] = ("zhipu-api",),
             controller_addr: str = None,
             worker_addr: str = None,
             version: Literal["glm-4"] = "glm-4",
@@ -84,6 +87,45 @@ class ChatGLMWorker(ApiModelWorker):
             #             yield {"error_code": 0, "text": text}
 
 
+    def do_embeddings(self, params: ApiEmbeddingsParams) -> Dict:
+        embed_model = params.embed_model or self.DEFAULT_EMBED_MODEL
+
+        params.load_config(self.model_names[0])
+        i = 0
+        batch_size = 1
+        result = []
+        while i < len(params.texts):
+            token = generate_token(params.api_key, 60)
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}"
+            }
+            data = {
+                "model": embed_model,
+                "input": "".join(params.texts[i: i + batch_size])
+            }
+            embedding_data = self.request_embedding_api(headers, data, 1)
+            if embedding_data:
+                result.append(embedding_data)
+            i += batch_size
+            print(f"请求{embed_model}接口处理第{i}块文本，返回embeddings: \n{embedding_data}")
+
+        return {"code": 200, "data": result}
+
+    # 请求接口，支持重试
+    def request_embedding_api(self, headers, data, retry=0):
+        response = ''
+        try:
+            url = "https://open.bigmodel.cn/api/paas/v4/embeddings"
+            response = requests.post(url, headers=headers, json=data)
+            ans = response.json()
+            return ans["data"][0]["embedding"]
+        except Exception as e:
+            print(f"request_embedding_api error={e} \nresponse={response}")
+            if retry > 0:
+                return self.request_embedding_api(headers, data, retry - 1)
+            else:
+                return None
 
     def get_embeddings(self, params):
         print("embedding")

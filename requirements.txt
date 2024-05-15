@@ -5,6 +5,7 @@ xformers==0.0.23.post1
 transformers==4.37.2
 sentence_transformers==2.2.2
 langchain==0.0.354
+langchain-community==0.0.19
 langchain-experimental==0.0.47
 pydantic==1.10.13
 fschat==0.2.35
@@ -42,7 +43,7 @@ llama-index==0.9.35
 # beautifulsoup4==4.12.2
 # pysrt==1.1.2
 # dashscope==1.13.6 # qwen
-# volcengine==1.0.119 # fangzhou
+# volcengine==1.0.134 # fangzhou
 # uncomment libs if you want to use corresponding vector store
 # pymilvus==2.3.6
 # psycopg2==2.9.9
