@@ -1,4 +1,5 @@
 import sys
+
 from configs.model_config import LLM_DEVICE
 
 # httpx 请求默认超时时间（秒）。如果加载模型或对话较慢，出现超时错误，可以适当加大该值。
@@ -10,7 +11,8 @@ OPEN_CROSS_DOMAIN = False
 
 # 各服务器默认绑定host。如改为"0.0.0.0"需要修改下方所有XX_SERVER的host
 # DEFAULT_BIND_HOST = "0.0.0.0" if sys.platform != "win32" else "127.0.0.1"
-DEFAULT_BIND_HOST = "127.0.0.1" # 10.228.67.99
+# DEFAULT_BIND_HOST = "127.0.0.1" # 10.228.67.99
+DEFAULT_BIND_HOST = "10.228.67.99"
 
 
 # webui.py server
@@ -43,12 +45,10 @@ FSCHAT_MODEL_WORKERS = {
         # False,'vllm',使用的推理加速框架,使用vllm如果出现HuggingFace通信问题，参见doc/FAQ
         # vllm对一些模型支持还不成熟，暂时默认关闭
         "infer_turbo": False,
-
         # model_worker多卡加载需要配置的参数
         # "gpus": None, # 使用的GPU，以str的格式指定，如"0,1"，如失效请使用CUDA_VISIBLE_DEVICES="0,1"等形式指定
         # "num_gpus": 1, # 使用GPU的数量
         # "max_gpu_memory": "20GiB", # 每个GPU占用的最大显存
-
         # 以下为model_worker非常用参数，可根据需要配置
         # "load_8bit": False, # 开启8bit量化
         # "cpu_offloading": None,
@@ -65,9 +65,7 @@ FSCHAT_MODEL_WORKERS = {
         # "stream_interval": 2,
         # "no_register": False,
         # "embed_in_truncate": False,
-
         # 以下为vllm_worker配置参数,注意使用vllm必须有gpu，仅在Linux测试通过
-
         # tokenizer = model_path # 如果tokenizer与model_path不一致在此处添加
         # 'tokenizer_mode':'auto',
         # 'trust_remote_code':True,
@@ -90,7 +88,6 @@ FSCHAT_MODEL_WORKERS = {
         # 'num_gpus': 1
         # 'engine_use_ray': False,
         # 'disable_log_requests': False
-
     },
     "chatglm3-6b": {
         "device": "cuda",
@@ -129,9 +126,9 @@ FSCHAT_MODEL_WORKERS = {
     "gemini-api": {
         "port": 21010,
     },
-    "Qwen1.5-72B-Chat": {
-        "port": 10003
-    }
+    "Qwen1.5-32B-Chat": {"port": 10003},
+    "CodeQwen1.5-7B-Chat": {"port": 10004},
+    "Qwen1.5-72B-Chat": {"port": 10005},
 }
 
 FSCHAT_CONTROLLER = {

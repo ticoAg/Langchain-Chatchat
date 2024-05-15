@@ -26,7 +26,9 @@ EMBEDDING_MODEL_OUTPUT_PATH = "output"
 # 在这里，我们使用目前主流的两个离线模型，其中，chatglm3-6b 为默认加载模型。
 # 如果你的显存不足，可使用 Qwen-1_8B-Chat, 该模型 FP16 仅需 3.8G显存。
 LLM_MODELS = [
-    "Qwen1.5-72B-Chat"
+    "Qwen1.5-72B-Chat",
+    "Qwen1.5-32B-Chat",
+    "CodeQwen1.5-7B-Chat",
 ]
 
 # LLM_MODELS = ["chatglm3-6b", "zhipu-api", "openai-api"]
@@ -46,24 +48,31 @@ ONLINE_LLM_MODEL = {
     # 线上模型。请在server_config中为每个在线API设置不同的端口
     "Qwen1.5-72B-Chat": {
         "model_name": "Qwen1.5-72B-Chat",
-        "api_base_url": "http://10.228.67.99:26920/v1",
-        "api_key": "sk-laikang-aihealthmanager-test",
+        "api_base_url": "http://10.228.67.99:26928/v1",
+        "api_key": "sk-nTVTTvIJH7rNphrH19C8067b931549EcAe240fFdDd4a46Ed",
     },
-
+    "Qwen1.5-32B-Chat": {
+        "model_name": "Qwen1.5-32B-Chat",
+        "api_base_url": "http://10.228.67.99:26928/v1",
+        "api_key": "sk-nTVTTvIJH7rNphrH19C8067b931549EcAe240fFdDd4a46Ed",
+    },
+    "CodeQwen1.5-7B-Chat": {
+        "model_name": "CodeQwen1.5-7B-Chat",
+        "api_base_url": "http://10.228.67.99:26928/v1",
+        "api_key": "sk-nTVTTvIJH7rNphrH19C8067b931549EcAe240fFdDd4a46Ed",
+    },
     "openai-api": {
         "model_name": "gpt-4",
         "api_base_url": "https://api.openai.com/v1",
         "api_key": "",
         "openai_proxy": "",
     },
-
     # 智谱AI API,具体注册及api key获取请前往 http://open.bigmodel.cn
     "zhipu-api": {
         "api_key": "",
         "version": "glm-4",
         "provider": "ChatGLMWorker",
     },
-
     # 具体注册及api key获取请前往 https://api.minimax.chat/
     "minimax-api": {
         "group_id": "",
@@ -71,16 +80,14 @@ ONLINE_LLM_MODEL = {
         "is_pro": False,
         "provider": "MiniMaxWorker",
     },
-
     # 具体注册及api key获取请前往 https://xinghuo.xfyun.cn/
     "xinghuo-api": {
         "APPID": "",
         "APISecret": "",
         "api_key": "",
-        "version": "v3.5", # 你使用的讯飞星火大模型版本，可选包括 "v3.5","v3.0", "v2.0", "v1.5"
+        "version": "v3.5",  # 你使用的讯飞星火大模型版本，可选包括 "v3.5","v3.0", "v2.0", "v1.5"
         "provider": "XingHuoWorker",
     },
-
     # 百度千帆 API，申请方式请参考 https://cloud.baidu.com/doc/WENXINWORKSHOP/s/4lilb2lpf
     "qianfan-api": {
         "version": "ERNIE-Bot",  # 注意大小写。当前支持 "ERNIE-Bot" 或 "ERNIE-Bot-turbo"， 更多的见官方文档。
@@ -89,7 +96,6 @@ ONLINE_LLM_MODEL = {
         "secret_key": "",
         "provider": "QianFanWorker",
     },
-
     # 火山方舟 API，文档参考 https://www.volcengine.com/docs/82379
     "fangzhou-api": {
         "version": "chatglm-6b-model",
@@ -98,15 +104,13 @@ ONLINE_LLM_MODEL = {
         "secret_key": "",
         "provider": "FangZhouWorker",
     },
-
     # 阿里云通义千问 API，文档参考 https://help.aliyun.com/zh/dashscope/developer-reference/api-details
     "qwen-api": {
         "version": "qwen-max",
         "api_key": "",
         "provider": "QwenWorker",
-        "embed_model": "text-embedding-v1"  # embedding 模型名称
+        "embed_model": "text-embedding-v1",  # embedding 模型名称
     },
-
     # 百川 API，申请方式请参考 https://www.baichuan-ai.com/home#api-enter
     "baichuan-api": {
         "version": "Baichuan2-53B",
@@ -114,7 +118,6 @@ ONLINE_LLM_MODEL = {
         "secret_key": "",
         "provider": "BaiChuanWorker",
     },
-
     # Azure API
     "azure-api": {
         "deployment_name": "",  # 部署容器的名字
@@ -123,7 +126,6 @@ ONLINE_LLM_MODEL = {
         "api_key": "",
         "provider": "AzureWorker",
     },
-
     # 昆仑万维天工 API https://model-platform.tiangong.cn/
     "tiangong-api": {
         "version": "SkyChat-MegaVerse",
@@ -135,8 +137,7 @@ ONLINE_LLM_MODEL = {
     "gemini-api": {
         "api_key": "",
         "provider": "GeminiWorker",
-    }
-
+    },
 }
 
 # 在以下字典中修改属性值，以指定本地embedding模型存储位置。支持3种设置方法：
@@ -161,41 +162,33 @@ MODEL_PATH = {
         "m3e-small": "moka-ai/m3e-small",
         "m3e-base": "moka-ai/m3e-base",
         "m3e-large": "moka-ai/m3e-large",
-
         "bge-small-zh": "BAAI/bge-small-zh",
         "bge-base-zh": "BAAI/bge-base-zh",
         "bge-large-zh": "BAAI/bge-large-zh",
         "bge-large-zh-noinstruct": "BAAI/bge-large-zh-noinstruct",
         "bge-base-zh-v1.5": "BAAI/bge-base-zh-v1.5",
         "bge-large-zh-v1.5": "BAAI/bge-large-zh-v1.5",
-
         "bge-m3": "BAAI/bge-m3",
-
         "piccolo-base-zh": "sensenova/piccolo-base-zh",
         "piccolo-large-zh": "sensenova/piccolo-large-zh",
         "nlp_gte_sentence-embedding_chinese-large": "damo/nlp_gte_sentence-embedding_chinese-large",
         "text-embedding-ada-002": "your OPENAI_API_KEY",
     },
-
     "llm_model": {
         "chatglm2-6b": "THUDM/chatglm2-6b",
         "chatglm2-6b-32k": "THUDM/chatglm2-6b-32k",
         "chatglm3-6b": "THUDM/chatglm3-6b",
         "chatglm3-6b-32k": "THUDM/chatglm3-6b-32k",
-
         "Orion-14B-Chat": "OrionStarAI/Orion-14B-Chat",
         "Orion-14B-Chat-Plugin": "OrionStarAI/Orion-14B-Chat-Plugin",
         "Orion-14B-LongChat": "OrionStarAI/Orion-14B-LongChat",
-
         "Llama-2-7b-chat-hf": "meta-llama/Llama-2-7b-chat-hf",
         "Llama-2-13b-chat-hf": "meta-llama/Llama-2-13b-chat-hf",
         "Llama-2-70b-chat-hf": "meta-llama/Llama-2-70b-chat-hf",
-
         "Qwen-1_8B-Chat": "Qwen/Qwen-1_8B-Chat",
         "Qwen-7B-Chat": "Qwen/Qwen-7B-Chat",
         "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat",
         "Qwen-72B-Chat": "Qwen/Qwen-72B-Chat",
-
         # Qwen1.5 模型 VLLM可能出现问题
         "Qwen1.5-0.5B-Chat": "Qwen/Qwen1.5-0.5B-Chat",
         "Qwen1.5-1.8B-Chat": "Qwen/Qwen1.5-1.8B-Chat",
@@ -203,30 +196,23 @@ MODEL_PATH = {
         "Qwen1.5-7B-Chat": "Qwen/Qwen1.5-7B-Chat",
         "Qwen1.5-14B-Chat": "Qwen/Qwen1.5-14B-Chat",
         "Qwen1.5-72B-Chat": "Qwen/Qwen1.5-72B-Chat",
-
         "baichuan-7b-chat": "baichuan-inc/Baichuan-7B-Chat",
         "baichuan-13b-chat": "baichuan-inc/Baichuan-13B-Chat",
         "baichuan2-7b-chat": "baichuan-inc/Baichuan2-7B-Chat",
         "baichuan2-13b-chat": "baichuan-inc/Baichuan2-13B-Chat",
-
         "internlm-7b": "internlm/internlm-7b",
         "internlm-chat-7b": "internlm/internlm-chat-7b",
         "internlm2-chat-7b": "internlm/internlm2-chat-7b",
         "internlm2-chat-20b": "internlm/internlm2-chat-20b",
-
         "BlueLM-7B-Chat": "vivo-ai/BlueLM-7B-Chat",
         "BlueLM-7B-Chat-32k": "vivo-ai/BlueLM-7B-Chat-32k",
-
         "Yi-34B-Chat": "https://huggingface.co/01-ai/Yi-34B-Chat",
-
         "agentlm-7b": "THUDM/agentlm-7b",
         "agentlm-13b": "THUDM/agentlm-13b",
         "agentlm-70b": "THUDM/agentlm-70b",
-
         "falcon-7b": "tiiuae/falcon-7b",
         "falcon-40b": "tiiuae/falcon-40b",
         "falcon-rw-7b": "tiiuae/falcon-rw-7b",
-
         "aquila-7b": "BAAI/Aquila-7B",
         "aquilachat-7b": "BAAI/AquilaChat-7B",
         "open_llama_13b": "openlm-research/open_llama_13b",
@@ -247,11 +233,10 @@ MODEL_PATH = {
         "dolly-v2-12b": "databricks/dolly-v2-12b",
         "stablelm-tuned-alpha-7b": "stabilityai/stablelm-tuned-alpha-7b",
     },
-
     "reranker": {
         "bge-reranker-large": "BAAI/bge-reranker-large",
         "bge-reranker-base": "BAAI/bge-reranker-base",
-    }
+    },
 }
 
 # 通常情况下不需要更改以下内容
@@ -265,32 +250,25 @@ VLLM_MODEL_DICT = {
     "chatglm2-6b-32k": "THUDM/chatglm2-6b-32k",
     "chatglm3-6b": "THUDM/chatglm3-6b",
     "chatglm3-6b-32k": "THUDM/chatglm3-6b-32k",
-
     "Llama-2-7b-chat-hf": "meta-llama/Llama-2-7b-chat-hf",
     "Llama-2-13b-chat-hf": "meta-llama/Llama-2-13b-chat-hf",
     "Llama-2-70b-chat-hf": "meta-llama/Llama-2-70b-chat-hf",
-
     "Qwen-1_8B-Chat": "Qwen/Qwen-1_8B-Chat",
     "Qwen-7B-Chat": "Qwen/Qwen-7B-Chat",
     "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat",
     "Qwen-72B-Chat": "Qwen/Qwen-72B-Chat",
-
     "baichuan-7b-chat": "baichuan-inc/Baichuan-7B-Chat",
     "baichuan-13b-chat": "baichuan-inc/Baichuan-13B-Chat",
     "baichuan2-7b-chat": "baichuan-inc/Baichuan-7B-Chat",
     "baichuan2-13b-chat": "baichuan-inc/Baichuan-13B-Chat",
-
     "BlueLM-7B-Chat": "vivo-ai/BlueLM-7B-Chat",
     "BlueLM-7B-Chat-32k": "vivo-ai/BlueLM-7B-Chat-32k",
-
     "internlm-7b": "internlm/internlm-7b",
     "internlm-chat-7b": "internlm/internlm-chat-7b",
     "internlm2-chat-7b": "internlm/Models/internlm2-chat-7b",
     "internlm2-chat-20b": "internlm/Models/internlm2-chat-20b",
-
     "aquila-7b": "BAAI/Aquila-7B",
     "aquilachat-7b": "BAAI/AquilaChat-7B",
-
     "falcon-7b": "tiiuae/falcon-7b",
     "falcon-40b": "tiiuae/falcon-40b",
     "falcon-rw-7b": "tiiuae/falcon-rw-7b",
@@ -311,7 +289,6 @@ VLLM_MODEL_DICT = {
     "mpt-30b": "mosaicml/mpt-30b",
     "opt-66b": "facebook/opt-66b",
     "opt-iml-max-30b": "facebook/opt-iml-max-30b",
-
 }
 
 SUPPORT_AGENT_MODEL = [
