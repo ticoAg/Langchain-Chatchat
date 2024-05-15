@@ -1,6 +1,21 @@
+import socket
 import sys
 
 from configs.model_config import LLM_DEVICE
+
+
+def get_ip_address():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(("10.255.255.255", 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = "127.0.0.1"
+    finally:
+        s.close()
+    return IP
+
 
 # httpx 请求默认超时时间（秒）。如果加载模型或对话较慢，出现超时错误，可以适当加大该值。
 HTTPX_DEFAULT_TIMEOUT = 300.0
@@ -10,10 +25,13 @@ HTTPX_DEFAULT_TIMEOUT = 300.0
 OPEN_CROSS_DOMAIN = False
 
 # 各服务器默认绑定host。如改为"0.0.0.0"需要修改下方所有XX_SERVER的host
-# DEFAULT_BIND_HOST = "0.0.0.0" if sys.platform != "win32" else "127.0.0.1"
-# DEFAULT_BIND_HOST = "127.0.0.1" # 10.228.67.99
-DEFAULT_BIND_HOST = "10.228.67.99"
-
+IP = get_ip_address()
+if IP.startswith("10.228.") or IP.startswith("192."):
+    DEFAULT_BIND_HOST = IP
+elif sys.platform == "win32":
+    DEFAULT_BIND_HOST = "127.0.0.1"
+else:
+    DEFAULT_BIND_HOST = "0.0.0.0"
 
 # webui.py server
 WEBUI_SERVER = {
@@ -93,7 +111,7 @@ FSCHAT_MODEL_WORKERS = {
         "device": "cuda",
     },
     "Qwen1.5-0.5B-Chat": {
-        "device": "cuda",
+        "device": "auto",
     },
     # 以下配置可以不用修改，在model_config中设置启动的模型
     "zhipu-api": {

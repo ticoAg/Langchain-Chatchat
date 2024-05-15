@@ -26,9 +26,9 @@ EMBEDDING_MODEL_OUTPUT_PATH = "output"
 # 在这里，我们使用目前主流的两个离线模型，其中，chatglm3-6b 为默认加载模型。
 # 如果你的显存不足，可使用 Qwen-1_8B-Chat, 该模型 FP16 仅需 3.8G显存。
 LLM_MODELS = [
-    "Qwen1.5-72B-Chat",
-    "Qwen1.5-32B-Chat",
     "CodeQwen1.5-7B-Chat",
+    "Qwen1.5-32B-Chat",
+    "Qwen1.5-72B-Chat",
 ]
 
 # LLM_MODELS = ["chatglm3-6b", "zhipu-api", "openai-api"]
