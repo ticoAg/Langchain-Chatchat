@@ -63,7 +63,7 @@ class Logger:
         self.logger = logger
 
 
-logger = Logger("Langchain-ChatChat").logger
+logger = Logger("Langchain-Chatchat").logger
 
 # 临时文件目录，主要用于文件对话
 BASE_TEMP_DIR = os.path.join(tempfile.gettempdir(), "chatchat")

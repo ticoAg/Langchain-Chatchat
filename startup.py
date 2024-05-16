@@ -189,13 +189,7 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
             sys.modules["fastchat.serve.vllm_worker"].logger.setLevel(log_level)
 
         else:
-            from fastchat.serve.model_worker import (
-                AWQConfig,
-                GptqConfig,
-                ModelWorker,
-                app,
-                worker_id,
-            )
+            from fastchat.serve.model_worker import AWQConfig, GptqConfig, ModelWorker, app, worker_id
 
             args.gpus = "0"  # GPU的编号,如果有多个GPU，可以设置为"0,1,2,3"
             args.max_gpu_memory = "22GiB"
@@ -222,9 +216,7 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
                 if args.num_gpus is None:
                     args.num_gpus = len(args.gpus.split(","))
                 if len(args.gpus.split(",")) < args.num_gpus:
-                    raise ValueError(
-                        f"Larger --num-gpus ({args.num_gpus}) than --gpus {args.gpus}!"
-                    )
+                    raise ValueError(f"Larger --num-gpus ({args.num_gpus}) than --gpus {args.gpus}!")
                 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
             gptq_config = GptqConfig(
                 ckpt=args.gptq_ckpt or args.model_path,
@@ -327,9 +319,7 @@ def run_controller(log_level: str = "INFO", started_event: mp.Event = None):
     # add interface to release and load model worker
     @app.post("/release_worker")
     def release_worker(
-        model_name: str = Body(
-            ..., description="要释放模型的名称", samples=["chatglm-6b"]
-        ),
+        model_name: str = Body(..., description="要释放模型的名称", samples=["chatglm-6b"]),
         # worker_address: str = Body(None, description="要释放模型的地址，与名称二选一", samples=[FSCHAT_CONTROLLER_address()]),
         new_model_name: str = Body(None, description="释放后加载该模型"),
         keep_origin: bool = Body(False, description="不释放原模型，加载新模型"),
@@ -624,9 +614,7 @@ def dump_server_info(after_start=False, args=None):
     logger.debug(f"操作系统：{platform.platform()}.")
     logger.debug(f"python版本：{sys.version}")
     logger.debug(f"项目版本：{VERSION}")
-    logger.debug(
-        f"langchain版本：{langchain.__version__}. fastchat版本：{fastchat.__version__}"
-    )
+    logger.debug(f"langchain版本：{langchain.__version__}. fastchat版本：{fastchat.__version__}")
     logger.debug("\n")
 
     models = LLM_MODELS
@@ -650,7 +638,6 @@ def dump_server_info(after_start=False, args=None):
         if args.webui:
             logger.debug(f"    Chatchat WEBUI Server: {webui_address()}")
     logger.debug("=" * 30 + "Langchain-Chatchat Configuration" + "=" * 30)
-    logger.debug("\n")
 
 
 async def start_main_server():
@@ -713,12 +700,7 @@ async def start_main_server():
     processes = {"online_api": {}, "model_worker": {}}
 
     def process_count():
-        return (
-            len(processes)
-            + len(processes["online_api"])
-            + len(processes["model_worker"])
-            - 2
-        )
+        return len(processes) + len(processes["online_api"]) + len(processes["model_worker"]) - 2
 
     if args.quiet or not log_verbose:
         log_level = "ERROR"
@@ -900,9 +882,7 @@ async def start_main_server():
                             processes["model_worker"][new_model_name] = process
                             e.wait()
                             timing = datetime.now() - start_time
-                            logger.info(
-                                f"成功启动新模型进程：{new_model_name}。用时：{timing}。"
-                            )
+                            logger.info(f"成功启动新模型进程：{new_model_name}。用时：{timing}。")
                         else:
                             logger.error(f"未找到模型进程：{model_name}")
 

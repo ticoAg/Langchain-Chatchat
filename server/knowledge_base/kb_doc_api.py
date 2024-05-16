@@ -37,9 +37,7 @@ from server.utils import BaseResponse, ListResponse, run_in_thread_pool
 
 def search_docs(
     query: str = Body("", description="用户输入", examples=["你好"]),
-    knowledge_base_name: str = Body(
-        ..., description="知识库名称", examples=["samples"]
-    ),
+    knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
     top_k: int = Body(VECTOR_SEARCH_TOP_K, description="匹配向量数"),
     score_threshold: float = Body(
         SCORE_THRESHOLD,
@@ -94,12 +92,8 @@ def search_docs(
 
 
 def update_docs_by_id(
-    knowledge_base_name: str = Body(
-        ..., description="知识库名称", examples=["samples"]
-    ),
-    docs: Dict[str, Document] = Body(
-        ..., description="要更新的文档内容，形如：{id: Document, ...}"
-    ),
+    knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
+    docs: Dict[str, Document] = Body(..., description="要更新的文档内容，形如：{id: Document, ...}"),
 ) -> BaseResponse:
     """
     按照文档 ID 更新文档内容
@@ -120,17 +114,13 @@ def list_files(knowledge_base_name: str) -> ListResponse:
     knowledge_base_name = urllib.parse.unquote(knowledge_base_name)
     kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
     if kb is None:
-        return ListResponse(
-            code=404, msg=f"未找到知识库 {knowledge_base_name}", data=[]
-        )
+        return ListResponse(code=404, msg=f"未找到知识库 {knowledge_base_name}", data=[])
     else:
         all_doc_names = kb.list_files()
         return ListResponse(data=all_doc_names)
 
 
-def _save_files_in_thread(
-    files: List[UploadFile], knowledge_base_name: str, override: bool
-):
+def _save_files_in_thread(files: List[UploadFile], knowledge_base_name: str, override: bool):
     """
     通过多线程将上传的文件保存到对应知识库目录内。
     生成器返回保存结果：{"code":200, "msg": "xxx", "data": {"knowledge_base_name":"xxx", "file_name": "xxx"}}
@@ -142,9 +132,7 @@ def _save_files_in_thread(
         """
         try:
             filename = file.filename
-            file_path = get_file_path(
-                knowledge_base_name=knowledge_base_name, doc_name=filename
-            )
+            file_path = get_file_path(knowledge_base_name=knowledge_base_name, doc_name=filename)
             data = {"knowledge_base_name": knowledge_base_name, "file_name": filename}
 
             file_content = file.file.read()  # 读取上传文件的内容
@@ -164,14 +152,11 @@ def _save_files_in_thread(
             return dict(code=200, msg=f"成功上传文件 {filename}", data=data)
         except Exception as e:
             msg = f"{filename} 文件上传失败，报错信息为: {e}"
-            logger.error(
-                f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None
-            )
+            logger.error(f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None)
             return dict(code=500, msg=msg, data=data)
 
     params = [
-        {"file": file, "knowledge_base_name": knowledge_base_name, "override": override}
-        for file in files
+        {"file": file, "knowledge_base_name": knowledge_base_name, "override": override} for file in files
     ]
     for result in run_in_thread_pool(save_file, params=params):
         yield result
@@ -192,9 +177,7 @@ def _save_files_in_thread(
 
 def upload_docs(
     files: List[UploadFile] = File(..., description="上传文件，支持多文件"),
-    knowledge_base_name: str = Form(
-        ..., description="知识库名称", examples=["samples"]
-    ),
+    knowledge_base_name: str = Form(..., description="知识库名称", examples=["samples"]),
     override: bool = Form(False, description="覆盖已有文件"),
     to_vector_store: bool = Form(True, description="上传文件后是否进行向量化"),
     chunk_size: int = Form(CHUNK_SIZE, description="知识库中单段文本最大长度"),
@@ -221,9 +204,7 @@ def upload_docs(
     file_names = list(docs.keys())
 
     # 先将上传的文件保存到磁盘
-    for result in _save_files_in_thread(
-        files, knowledge_base_name=knowledge_base_name, override=override
-    ):
+    for result in _save_files_in_thread(files, knowledge_base_name=knowledge_base_name, override=override):
         filename = result["data"]["file_name"]
         if result["code"] != 200:
             failed_files[filename] = result["msg"]
@@ -247,9 +228,7 @@ def upload_docs(
         if not not_refresh_vs_cache:
             kb.save_vector_store()
 
-    return BaseResponse(
-        code=200, msg="文件上传与向量化完成", data={"failed_files": failed_files}
-    )
+    return BaseResponse(code=200, msg="文件上传与向量化完成", data={"failed_files": failed_files})
 
 
 def delete_docs(
@@ -272,29 +251,21 @@ def delete_docs(
             failed_files[file_name] = f"未找到文件 {file_name}"
 
         try:
-            kb_file = KnowledgeFile(
-                filename=file_name, knowledge_base_name=knowledge_base_name
-            )
+            kb_file = KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name)
             kb.delete_doc(kb_file, delete_content, not_refresh_vs_cache=True)
         except Exception as e:
             msg = f"{file_name} 文件删除失败，错误信息：{e}"
-            logger.error(
-                f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None
-            )
+            logger.error(f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None)
             failed_files[file_name] = msg
 
     if not not_refresh_vs_cache:
         kb.save_vector_store()
 
-    return BaseResponse(
-        code=200, msg=f"文件删除完成", data={"failed_files": failed_files}
-    )
+    return BaseResponse(code=200, msg=f"文件删除完成", data={"failed_files": failed_files})
 
 
 def update_info(
-    knowledge_base_name: str = Body(
-        ..., description="知识库名称", examples=["samples"]
-    ),
+    knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
     kb_info: str = Body(..., description="知识库介绍", examples=["这是一个知识库"]),
 ):
     if not validate_kb_name(knowledge_base_name):
@@ -309,9 +280,7 @@ def update_info(
 
 
 def update_docs(
-    knowledge_base_name: str = Body(
-        ..., description="知识库名称", examples=["samples"]
-    ),
+    knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
     file_names: List[str] = Body(
         ..., description="文件名称，支持多文件", examples=[["file_name1", "text.txt"]]
     ),
@@ -347,11 +316,7 @@ def update_docs(
             continue
         if file_name not in docs:
             try:
-                kb_files.append(
-                    KnowledgeFile(
-                        filename=file_name, knowledge_base_name=knowledge_base_name
-                    )
-                )
+                kb_files.append(KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name))
             except Exception as e:
                 msg = f"加载文档 {file_name} 时出错：{e}"
                 logger.error(
@@ -370,9 +335,7 @@ def update_docs(
     ):
         if status:
             kb_name, file_name, new_docs = result
-            kb_file = KnowledgeFile(
-                filename=file_name, knowledge_base_name=knowledge_base_name
-            )
+            kb_file = KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name)
             kb_file.splited_docs = new_docs
             kb.update_doc(kb_file, not_refresh_vs_cache=True)
         else:
@@ -383,29 +346,21 @@ def update_docs(
     for file_name, v in docs.items():
         try:
             v = [x if isinstance(x, Document) else Document(**x) for x in v]
-            kb_file = KnowledgeFile(
-                filename=file_name, knowledge_base_name=knowledge_base_name
-            )
+            kb_file = KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name)
             kb.update_doc(kb_file, docs=v, not_refresh_vs_cache=True)
         except Exception as e:
             msg = f"为 {file_name} 添加自定义docs时出错：{e}"
-            logger.error(
-                f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None
-            )
+            logger.error(f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None)
             failed_files[file_name] = msg
 
     if not not_refresh_vs_cache:
         kb.save_vector_store()
 
-    return BaseResponse(
-        code=200, msg=f"更新文档完成", data={"failed_files": failed_files}
-    )
+    return BaseResponse(code=200, msg=f"更新文档完成", data={"failed_files": failed_files})
 
 
 def download_doc(
-    knowledge_base_name: str = Query(
-        ..., description="知识库名称", examples=["samples"]
-    ),
+    knowledge_base_name: str = Query(..., description="知识库名称", examples=["samples"]),
     file_name: str = Query(..., description="文件名称", examples=["test.txt"]),
     preview: bool = Query(False, description="是：浏览器内预览；否：下载"),
 ):
@@ -425,9 +380,7 @@ def download_doc(
         content_disposition_type = None
 
     try:
-        kb_file = KnowledgeFile(
-            filename=file_name, knowledge_base_name=knowledge_base_name
-        )
+        kb_file = KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name)
 
         if os.path.exists(kb_file.filepath):
             return FileResponse(
@@ -438,9 +391,7 @@ def download_doc(
             )
     except Exception as e:
         msg = f"{kb_file.filename} 读取文件失败，错误信息是：{e}"
-        logger.error(
-            f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None
-        )
+        logger.error(f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None)
         return BaseResponse(code=500, msg=msg)
 
     return BaseResponse(code=500, msg=f"{kb_file.filename} 读取文件失败")
@@ -482,9 +433,7 @@ def recreate_vector_store(
             ):
                 if status:
                     kb_name, file_name, docs = result
-                    kb_file = KnowledgeFile(
-                        filename=file_name, knowledge_base_name=kb_name
-                    )
+                    kb_file = KnowledgeFile(filename=file_name, knowledge_base_name=kb_name)
                     kb_file.splited_docs = docs
                     yield json.dumps(
                         {
