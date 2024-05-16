@@ -3,9 +3,10 @@ import multiprocessing as mp
 import os
 import subprocess
 import sys
-from multiprocessing import Process
 from datetime import datetime
+from multiprocessing import Process
 from pprint import pprint
+
 from langchain_core._api import deprecated
 
 try:
@@ -17,40 +18,52 @@ except:
     pass
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+import argparse
+from typing import Dict, List
+
 from configs import (
+    API_SERVER,
+    EMBEDDING_MODEL,
+    FSCHAT_CONTROLLER,
+    FSCHAT_MODEL_WORKERS,
+    FSCHAT_OPENAI_API,
+    HTTPX_DEFAULT_TIMEOUT,
+    LLM_MODELS,
     LOG_PATH,
+    TEXT_SPLITTER_NAME,
+    VERSION,
+    WEBUI_SERVER,
     log_verbose,
     logger,
-    LLM_MODELS,
-    EMBEDDING_MODEL,
-    TEXT_SPLITTER_NAME,
-    FSCHAT_CONTROLLER,
-    FSCHAT_OPENAI_API,
-    FSCHAT_MODEL_WORKERS,
-    API_SERVER,
-    WEBUI_SERVER,
-    HTTPX_DEFAULT_TIMEOUT,
 )
-from server.utils import (fschat_controller_address, fschat_model_worker_address,
-                          fschat_openai_api_address, get_httpx_client, get_model_worker_config,
-                          MakeFastAPIOffline, FastAPI, llm_device, embedding_device)
 from server.knowledge_base.migrate import create_tables
-import argparse
-from typing import List, Dict
-from configs import VERSION
+from server.utils import (
+    FastAPI,
+    MakeFastAPIOffline,
+    embedding_device,
+    fschat_controller_address,
+    fschat_model_worker_address,
+    fschat_openai_api_address,
+    get_httpx_client,
+    get_model_worker_config,
+    llm_device,
+)
 
 
 @deprecated(
     since="0.3.0",
     message="模型启动功能将于 Langchain-Chatchat 0.3.x重写,支持更多模式和加速启动，0.2.x中相关功能将废弃",
-    removal="0.3.0")
+    removal="0.3.0",
+)
 def create_controller_app(
-        dispatch_method: str,
-        log_level: str = "INFO",
+    dispatch_method: str,
+    log_level: str = "INFO",
 ) -> FastAPI:
     import fastchat.constants
+
     fastchat.constants.LOGDIR = LOG_PATH
-    from fastchat.serve.controller import app, Controller, logger
+    from fastchat.serve.controller import Controller, app, logger
+
     logger.setLevel(log_level)
 
     controller = Controller(dispatch_method)
@@ -82,6 +95,7 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
         device:`LLM_DEVICE`
     """
     import fastchat.constants
+
     fastchat.constants.LOGDIR = LOG_PATH
     import argparse
 
@@ -92,19 +106,23 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
         setattr(args, k, v)
     if worker_class := kwargs.get("langchain_model"):  # Langchian支持的模型不用做操作
         from fastchat.serve.base_model_worker import app
+
         worker = ""
     # 在线模型API
     elif worker_class := kwargs.get("worker_class"):
         from fastchat.serve.base_model_worker import app
 
-        worker = worker_class(model_names=args.model_names,
-                              controller_addr=args.controller_address,
-                              worker_addr=args.worker_address)
+        worker = worker_class(
+            model_names=args.model_names,
+            controller_addr=args.controller_address,
+            worker_addr=args.worker_address,
+        )
         # sys.modules["fastchat.serve.base_model_worker"].worker = worker
         sys.modules["fastchat.serve.base_model_worker"].logger.setLevel(log_level)
     # 本地模型
     else:
         from configs.model_config import VLLM_MODEL_DICT
+
         if kwargs["model_names"][0] in VLLM_MODEL_DICT and args.infer_turbo == "vllm":
             import fastchat.serve.vllm_worker
             from fastchat.serve.vllm_worker import VLLMWorker, app, worker_id
@@ -112,11 +130,11 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
             from vllm.engine.arg_utils import AsyncEngineArgs
 
             args.tokenizer = args.model_path
-            args.tokenizer_mode = 'auto'
+            args.tokenizer_mode = "auto"
             args.trust_remote_code = True
             args.download_dir = None
-            args.load_format = 'auto'
-            args.dtype = 'auto'
+            args.load_format = "auto"
+            args.dtype = "auto"
             args.seed = 0
             args.worker_use_ray = False
             args.pipeline_parallel_size = 1
@@ -171,7 +189,13 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
             sys.modules["fastchat.serve.vllm_worker"].logger.setLevel(log_level)
 
         else:
-            from fastchat.serve.model_worker import app, GptqConfig, AWQConfig, ModelWorker, worker_id
+            from fastchat.serve.model_worker import (
+                AWQConfig,
+                GptqConfig,
+                ModelWorker,
+                app,
+                worker_id,
+            )
 
             args.gpus = "0"  # GPU的编号,如果有多个GPU，可以设置为"0,1,2,3"
             args.max_gpu_memory = "22GiB"
@@ -196,7 +220,7 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
                 setattr(args, k, v)
             if args.gpus:
                 if args.num_gpus is None:
-                    args.num_gpus = len(args.gpus.split(','))
+                    args.num_gpus = len(args.gpus.split(","))
                 if len(args.gpus.split(",")) < args.num_gpus:
                     raise ValueError(
                         f"Larger --num-gpus ({args.num_gpus}) than --gpus {args.gpus}!"
@@ -245,14 +269,16 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
 
 
 def create_openai_api_app(
-        controller_address: str,
-        api_keys: List = [],
-        log_level: str = "INFO",
+    controller_address: str,
+    api_keys: List = [],
+    log_level: str = "INFO",
 ) -> FastAPI:
     import fastchat.constants
+
     fastchat.constants.LOGDIR = LOG_PATH
-    from fastchat.serve.openai_api_server import app, CORSMiddleware, app_settings
+    from fastchat.serve.openai_api_server import CORSMiddleware, app, app_settings
     from fastchat.utils import build_logger
+
     logger = build_logger("openai_api", "openai_api.log")
     logger.setLevel(log_level)
 
@@ -281,12 +307,15 @@ def _set_app_event(app: FastAPI, started_event: mp.Event = None):
 
 
 def run_controller(log_level: str = "INFO", started_event: mp.Event = None):
-    import uvicorn
-    import httpx
-    from fastapi import Body
-    import time
     import sys
+    import time
+
+    import httpx
+    import uvicorn
+    from fastapi import Body
+
     from server.utils import set_httpx_config
+
     set_httpx_config()
 
     app = create_controller_app(
@@ -298,10 +327,12 @@ def run_controller(log_level: str = "INFO", started_event: mp.Event = None):
     # add interface to release and load model worker
     @app.post("/release_worker")
     def release_worker(
-            model_name: str = Body(..., description="要释放模型的名称", samples=["chatglm-6b"]),
-            # worker_address: str = Body(None, description="要释放模型的地址，与名称二选一", samples=[FSCHAT_CONTROLLER_address()]),
-            new_model_name: str = Body(None, description="释放后加载该模型"),
-            keep_origin: bool = Body(False, description="不释放原模型，加载新模型")
+        model_name: str = Body(
+            ..., description="要释放模型的名称", samples=["chatglm-6b"]
+        ),
+        # worker_address: str = Body(None, description="要释放模型的地址，与名称二选一", samples=[FSCHAT_CONTROLLER_address()]),
+        new_model_name: str = Body(None, description="释放后加载该模型"),
+        keep_origin: bool = Body(False, description="不释放原模型，加载新模型"),
     ) -> Dict:
         available_models = app._controller.list_models()
         if new_model_name in available_models:
@@ -326,8 +357,10 @@ def run_controller(log_level: str = "INFO", started_event: mp.Event = None):
             return {"code": 500, "msg": msg}
 
         with get_httpx_client() as client:
-            r = client.post(worker_address + "/release",
-                            json={"new_model_name": new_model_name, "keep_origin": keep_origin})
+            r = client.post(
+                worker_address + "/release",
+                json={"new_model_name": new_model_name, "keep_origin": keep_origin},
+            )
             if r.status_code != 200:
                 msg = f"failed to release model: {model_name}"
                 logger.error(msg)
@@ -365,16 +398,19 @@ def run_controller(log_level: str = "INFO", started_event: mp.Event = None):
 
 
 def run_model_worker(
-        model_name: str = LLM_MODELS[0],
-        controller_address: str = "",
-        log_level: str = "INFO",
-        q: mp.Queue = None,
-        started_event: mp.Event = None,
+    model_name: str = LLM_MODELS[0],
+    controller_address: str = "",
+    log_level: str = "INFO",
+    q: mp.Queue = None,
+    started_event: mp.Event = None,
 ):
+    import sys
+
     import uvicorn
     from fastapi import Body
-    import sys
+
     from server.utils import set_httpx_config
+
     set_httpx_config()
 
     kwargs = get_model_worker_config(model_name)
@@ -395,8 +431,8 @@ def run_model_worker(
     # add interface to release and load model
     @app.post("/release")
     def release_model(
-            new_model_name: str = Body(None, description="释放后加载该模型"),
-            keep_origin: bool = Body(False, description="不释放原模型，加载新模型")
+        new_model_name: str = Body(None, description="释放后加载该模型"),
+        keep_origin: bool = Body(False, description="不释放原模型，加载新模型"),
     ) -> Dict:
         if keep_origin:
             if new_model_name:
@@ -412,9 +448,12 @@ def run_model_worker(
 
 
 def run_openai_api(log_level: str = "INFO", started_event: mp.Event = None):
-    import uvicorn
     import sys
+
+    import uvicorn
+
     from server.utils import set_httpx_config
+
     set_httpx_config()
 
     controller_addr = fschat_controller_address()
@@ -430,9 +469,11 @@ def run_openai_api(log_level: str = "INFO", started_event: mp.Event = None):
 
 
 def run_api_server(started_event: mp.Event = None, run_mode: str = None):
-    from server.api import create_app
     import uvicorn
+
+    from server.api import create_app
     from server.utils import set_httpx_config
+
     set_httpx_config()
 
     app = create_app(run_mode=run_mode)
@@ -446,19 +487,29 @@ def run_api_server(started_event: mp.Event = None, run_mode: str = None):
 
 def run_webui(started_event: mp.Event = None, run_mode: str = None):
     from server.utils import set_httpx_config
+
     set_httpx_config()
 
     host = WEBUI_SERVER["host"]
     port = WEBUI_SERVER["port"]
 
-    cmd = ["streamlit", "run", "webui.py",
-           "--server.address", host,
-           "--server.port", str(port),
-           "--theme.base", "light",
-           "--theme.primaryColor", "#165dff",
-           "--theme.secondaryBackgroundColor", "#f5f5f5",
-           "--theme.textColor", "#000000",
-           ]
+    cmd = [
+        "streamlit",
+        "run",
+        "webui.py",
+        "--server.address",
+        host,
+        "--server.port",
+        str(port),
+        "--theme.base",
+        "light",
+        "--theme.primaryColor",
+        "#165dff",
+        "--theme.secondaryBackgroundColor",
+        "#f5f5f5",
+        "--theme.textColor",
+        "#000000",
+    ]
     if run_mode == "lite":
         cmd += [
             "--",
@@ -502,7 +553,7 @@ def parse_args() -> argparse.ArgumentParser:
         "--model-worker",
         action="store_true",
         help="run fastchat's model_worker server with specified model name. "
-             "specify --model-name if not using default LLM_MODELS",
+        "specify --model-name if not using default LLM_MODELS",
         dest="model_worker",
     )
     parser.add_argument(
@@ -512,7 +563,7 @@ def parse_args() -> argparse.ArgumentParser:
         nargs="+",
         default=LLM_MODELS,
         help="specify model name for model worker. "
-             "add addition names with space seperated to start multiple model workers.",
+        "add addition names with space seperated to start multiple model workers.",
         dest="model_name",
     )
     parser.add_argument(
@@ -562,45 +613,49 @@ def parse_args() -> argparse.ArgumentParser:
 
 def dump_server_info(after_start=False, args=None):
     import platform
-    import langchain
+
     import fastchat
+    import langchain
+
     from server.utils import api_address, webui_address
 
-    print("\n")
-    print("=" * 30 + "Langchain-Chatchat Configuration" + "=" * 30)
-    print(f"操作系统：{platform.platform()}.")
-    print(f"python版本：{sys.version}")
-    print(f"项目版本：{VERSION}")
-    print(f"langchain版本：{langchain.__version__}. fastchat版本：{fastchat.__version__}")
-    print("\n")
+    logger.debug("\n")
+    logger.debug("=" * 30 + "Langchain-Chatchat Configuration" + "=" * 30)
+    logger.debug(f"操作系统：{platform.platform()}.")
+    logger.debug(f"python版本：{sys.version}")
+    logger.debug(f"项目版本：{VERSION}")
+    logger.debug(
+        f"langchain版本：{langchain.__version__}. fastchat版本：{fastchat.__version__}"
+    )
+    logger.debug("\n")
 
     models = LLM_MODELS
     if args and args.model_name:
         models = args.model_name
 
-    print(f"当前使用的分词器：{TEXT_SPLITTER_NAME}")
-    print(f"当前启动的LLM模型：{models} @ {llm_device()}")
+    logger.debug(f"当前使用的分词器：{TEXT_SPLITTER_NAME}")
+    logger.debug(f"当前启动的LLM模型：{models} @ {llm_device()}")
 
     for model in models:
         pprint(get_model_worker_config(model))
-    print(f"当前Embbedings模型： {EMBEDDING_MODEL} @ {embedding_device()}")
+    logger.debug(f"当前Embbedings模型： {EMBEDDING_MODEL} @ {embedding_device()}")
 
     if after_start:
-        print("\n")
-        print(f"服务端运行信息：")
+        logger.debug("\n")
+        logger.debug(f"服务端运行信息：")
         if args.openai_api:
-            print(f"    OpenAI API Server: {fschat_openai_api_address()}")
+            logger.debug(f"    OpenAI API Server: {fschat_openai_api_address()}")
         if args.api:
-            print(f"    Chatchat  API  Server: {api_address()}")
+            logger.debug(f"    Chatchat  API  Server: {api_address()}")
         if args.webui:
-            print(f"    Chatchat WEBUI Server: {webui_address()}")
-    print("=" * 30 + "Langchain-Chatchat Configuration" + "=" * 30)
-    print("\n")
+            logger.debug(f"    Chatchat WEBUI Server: {webui_address()}")
+    logger.debug("=" * 30 + "Langchain-Chatchat Configuration" + "=" * 30)
+    logger.debug("\n")
 
 
 async def start_main_server():
-    import time
     import signal
+    import time
 
     def handler(signalname):
         """
@@ -658,7 +713,12 @@ async def start_main_server():
     processes = {"online_api": {}, "model_worker": {}}
 
     def process_count():
-        return len(processes) + len(processes["online_api"]) + len(processes["model_worker"]) - 2
+        return (
+            len(processes)
+            + len(processes["online_api"])
+            + len(processes["model_worker"])
+            - 2
+        )
 
     if args.quiet or not log_verbose:
         log_level = "ERROR"
@@ -692,11 +752,13 @@ async def start_main_server():
                 process = Process(
                     target=run_model_worker,
                     name=f"model_worker - {model_name}",
-                    kwargs=dict(model_name=model_name,
-                                controller_address=args.controller_address,
-                                log_level=log_level,
-                                q=queue,
-                                started_event=e),
+                    kwargs=dict(
+                        model_name=model_name,
+                        controller_address=args.controller_address,
+                        log_level=log_level,
+                        q=queue,
+                        started_event=e,
+                    ),
                     daemon=True,
                 )
                 processes["model_worker"][model_name] = process
@@ -704,19 +766,23 @@ async def start_main_server():
     if args.api_worker:
         for model_name in args.model_name:
             config = get_model_worker_config(model_name)
-            if (config.get("online_api")
-                    and config.get("worker_class")
-                    and model_name in FSCHAT_MODEL_WORKERS):
+            if (
+                config.get("online_api")
+                and config.get("worker_class")
+                and model_name in FSCHAT_MODEL_WORKERS
+            ):
                 e = manager.Event()
                 model_worker_started.append(e)
                 process = Process(
                     target=run_model_worker,
                     name=f"api_worker - {model_name}",
-                    kwargs=dict(model_name=model_name,
-                                controller_address=args.controller_address,
-                                log_level=log_level,
-                                q=queue,
-                                started_event=e),
+                    kwargs=dict(
+                        model_name=model_name,
+                        controller_address=args.controller_address,
+                        log_level=log_level,
+                        q=queue,
+                        started_event=e,
+                    ),
                     daemon=True,
                 )
                 processes["online_api"][model_name] = process
@@ -788,11 +854,13 @@ async def start_main_server():
                         process = Process(
                             target=run_model_worker,
                             name=f"model_worker - {new_model_name}",
-                            kwargs=dict(model_name=new_model_name,
-                                        controller_address=args.controller_address,
-                                        log_level=log_level,
-                                        q=queue,
-                                        started_event=e),
+                            kwargs=dict(
+                                model_name=new_model_name,
+                                controller_address=args.controller_address,
+                                log_level=log_level,
+                                q=queue,
+                                started_event=e,
+                            ),
                             daemon=True,
                         )
                         process.start()
@@ -818,11 +886,13 @@ async def start_main_server():
                             process = Process(
                                 target=run_model_worker,
                                 name=f"model_worker - {new_model_name}",
-                                kwargs=dict(model_name=new_model_name,
-                                            controller_address=args.controller_address,
-                                            log_level=log_level,
-                                            q=queue,
-                                            started_event=e),
+                                kwargs=dict(
+                                    model_name=new_model_name,
+                                    controller_address=args.controller_address,
+                                    log_level=log_level,
+                                    q=queue,
+                                    started_event=e,
+                                ),
                                 daemon=True,
                             )
                             process.start()
@@ -830,7 +900,9 @@ async def start_main_server():
                             processes["model_worker"][new_model_name] = process
                             e.wait()
                             timing = datetime.now() - start_time
-                            logger.info(f"成功启动新模型进程：{new_model_name}。用时：{timing}。")
+                            logger.info(
+                                f"成功启动新模型进程：{new_model_name}。用时：{timing}。"
+                            )
                         else:
                             logger.error(f"未找到模型进程：{model_name}")
 
@@ -892,5 +964,5 @@ if __name__ == "__main__":
 #   model=model,
 #   messages=[{"role": "user", "content": "Hello! What is your name?"}]
 # )
-# # print the completion
-# print(completion.choices[0].message.content)
+# # logger.debug the completion
+# logger.debug(completion.choices[0].message.content)

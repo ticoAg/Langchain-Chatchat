@@ -1,37 +1,49 @@
 import json
-from typing import List, Dict, Optional
-
-from langchain.schema import Document
-from langchain.vectorstores.pgvector import PGVector, DistanceStrategy
-from sqlalchemy import text
-
-from configs import kbs_config
-
-from server.knowledge_base.kb_service.base import SupportedVSType, KBService, EmbeddingsFunAdapter, \
-    score_threshold_process
-from server.knowledge_base.utils import KnowledgeFile
 import shutil
+from typing import Dict, List, Optional
+
 import sqlalchemy
+from langchain.schema import Document
+from langchain.vectorstores.pgvector import DistanceStrategy, PGVector
+from sqlalchemy import text
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm import Session
 
+from configs import kbs_config
+from server.knowledge_base.kb_service.base import (
+    EmbeddingsFunAdapter,
+    KBService,
+    SupportedVSType,
+    score_threshold_process,
+)
+from server.knowledge_base.utils import KnowledgeFile
+
 
 class PGKBService(KBService):
-    engine: Engine = sqlalchemy.create_engine(kbs_config.get("pg").get("connection_uri"), pool_size=10)
+    engine: Engine = sqlalchemy.create_engine(
+        kbs_config.get("pg").get("connection_uri"), pool_size=10
+    )
 
     def _load_pg_vector(self):
-        self.pg_vector = PGVector(embedding_function=EmbeddingsFunAdapter(self.embed_model),
-                                  collection_name=self.kb_name,
-                                  distance_strategy=DistanceStrategy.EUCLIDEAN,
-                                  connection=PGKBService.engine,
-                                  connection_string=kbs_config.get("pg").get("connection_uri"))
+        self.pg_vector = PGVector(
+            embedding_function=EmbeddingsFunAdapter(self.embed_model),
+            collection_name=self.kb_name,
+            distance_strategy=DistanceStrategy.EUCLIDEAN,
+            connection=PGKBService.engine,
+            connection_string=kbs_config.get("pg").get("connection_uri"),
+        )
 
     def get_doc_by_ids(self, ids: List[str]) -> List[Document]:
         with Session(PGKBService.engine) as session:
-            stmt = text("SELECT document, cmetadata FROM langchain_pg_embedding WHERE custom_id = ANY(:ids)")
-            results = [Document(page_content=row[0], metadata=row[1]) for row in
-                      session.execute(stmt, {'ids': ids}).fetchall()]
+            stmt = text(
+                "SELECT document, cmetadata FROM langchain_pg_embedding WHERE custom_id = ANY(:ids)"
+            )
+            results = [
+                Document(page_content=row[0], metadata=row[1])
+                for row in session.execute(stmt, {"ids": ids}).fetchall()
+            ]
             return results
+
     def del_doc_by_ids(self, ids: List[str]) -> bool:
         return super().del_doc_by_ids(ids)
 
@@ -46,7 +58,9 @@ class PGKBService(KBService):
 
     def do_drop_kb(self):
         with Session(PGKBService.engine) as session:
-            session.execute(text(f'''
+            session.execute(
+                text(
+                    f"""
                     -- 删除 langchain_pg_embedding 表中关联到 langchain_pg_collection 表中 的记录
                     DELETE FROM langchain_pg_embedding
                     WHERE collection_id IN (
@@ -54,7 +68,9 @@ class PGKBService(KBService):
                     );
                     -- 删除 langchain_pg_collection 表中 记录
                     DELETE FROM langchain_pg_collection WHERE name = '{self.kb_name}';
-            '''))
+            """
+                )
+            )
             session.commit()
             shutil.rmtree(self.kb_path)
 
@@ -73,8 +89,11 @@ class PGKBService(KBService):
         with Session(PGKBService.engine) as session:
             session.execute(
                 text(
-                    ''' DELETE FROM langchain_pg_embedding WHERE cmetadata::jsonb @> '{"source": "filepath"}'::jsonb;'''.replace(
-                        "filepath", self.get_relative_source_path(kb_file.filepath))))
+                    """ DELETE FROM langchain_pg_embedding WHERE cmetadata::jsonb @> '{"source": "filepath"}'::jsonb;""".replace(
+                        "filepath", self.get_relative_source_path(kb_file.filepath)
+                    )
+                )
+            )
             session.commit()
 
     def do_clear_vs(self):
@@ -82,7 +101,7 @@ class PGKBService(KBService):
         self.pg_vector.create_collection()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from server.db.base import Base, engine
 
     # Base.metadata.create_all(bind=engine)
@@ -91,5 +110,5 @@ if __name__ == '__main__':
     # pGKBService.add_doc(KnowledgeFile("README.md", "test"))
     # pGKBService.delete_doc(KnowledgeFile("README.md", "test"))
     # pGKBService.drop_kb()
-    print(pGKBService.get_doc_by_ids(["f1e51390-3029-4a19-90dc-7118aaa25772"]))
-    # print(pGKBService.search_docs("如何启动api服务"))
+    logger.debug(pGKBService.get_doc_by_ids(["f1e51390-3029-4a19-90dc-7118aaa25772"]))
+    # logger.debug(pGKBService.search_docs("如何启动api服务"))

@@ -1,25 +1,31 @@
-import sys
+import json
 import os
+import sys
+from typing import Dict, List
+
+from fastchat import conversation as conv
 from fastchat.conversation import Conversation
+
+from configs import log_verbose, logger
 from server.model_workers.base import *
 from server.utils import get_httpx_client
-from fastchat import conversation as conv
-import json
-from typing import List, Dict
-from configs import logger, log_verbose
 
 
 class AzureWorker(ApiModelWorker):
     def __init__(
-            self,
-            *,
-            controller_addr: str = None,
-            worker_addr: str = None,
-            model_names: List[str] = ["azure-api"],
-            version: str = "gpt-35-turbo",
-            **kwargs,
+        self,
+        *,
+        controller_addr: str = None,
+        worker_addr: str = None,
+        model_names: List[str] = ["azure-api"],
+        version: str = "gpt-35-turbo",
+        **kwargs,
     ):
-        kwargs.update(model_names=model_names, controller_addr=controller_addr, worker_addr=worker_addr)
+        kwargs.update(
+            model_names=model_names,
+            controller_addr=controller_addr,
+            worker_addr=worker_addr,
+        )
         super().__init__(**kwargs)
         self.version = version
 
@@ -32,23 +38,24 @@ class AzureWorker(ApiModelWorker):
             max_tokens=params.max_tokens if params.max_tokens else None,
             stream=True,
         )
-        url = ("https://{}.openai.azure.com/openai/deployments/{}/chat/completions?api-version={}"
-               .format(params.resource_name, params.deployment_name, params.api_version))
+        url = "https://{}.openai.azure.com/openai/deployments/{}/chat/completions?api-version={}".format(
+            params.resource_name, params.deployment_name, params.api_version
+        )
         headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'api-key': params.api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "api-key": params.api_key,
         }
 
         text = ""
         if log_verbose:
-            logger.info(f'{self.__class__.__name__}:url: {url}')
-            logger.info(f'{self.__class__.__name__}:headers: {headers}')
-            logger.info(f'{self.__class__.__name__}:data: {data}')
+            logger.info(f"{self.__class__.__name__}:url: {url}")
+            logger.info(f"{self.__class__.__name__}:headers: {headers}")
+            logger.info(f"{self.__class__.__name__}:data: {data}")
 
         with get_httpx_client() as client:
             with client.stream("POST", url, headers=headers, json=data) as response:
-                print(data)
+                logger.debug(data)
                 for line in response.iter_lines():
                     if not line.strip() or "[DONE]" in line:
                         continue
@@ -58,19 +65,18 @@ class AzureWorker(ApiModelWorker):
                     if choices := resp["choices"]:
                         if chunk := choices[0].get("delta", {}).get("content"):
                             text += chunk
-                            yield {
-                                    "error_code": 0,
-                                    "text": text
-                                }
-                        print(text)
+                            yield {"error_code": 0, "text": text}
+                        logger.debug(text)
                     else:
                         self.logger.error(f"请求 Azure API 时发生错误：{resp}")
 
     def get_embeddings(self, params):
-        print("embedding")
-        print(params)
+        logger.debug("embedding")
+        logger.debug(params)
 
-    def make_conv_template(self, conv_template: str = None, model_path: str = None) -> Conversation:
+    def make_conv_template(
+        self, conv_template: str = None, model_path: str = None
+    ) -> Conversation:
         return conv.Conversation(
             name=self.model_names[0],
             system_message="You are a helpful, respectful and honest assistant.",
@@ -83,8 +89,9 @@ class AzureWorker(ApiModelWorker):
 
 if __name__ == "__main__":
     import uvicorn
-    from server.utils import MakeFastAPIOffline
     from fastchat.serve.base_model_worker import app
+
+    from server.utils import MakeFastAPIOffline
 
     worker = AzureWorker(
         controller_addr="http://127.0.0.1:20001",

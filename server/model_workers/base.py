@@ -1,35 +1,44 @@
-from fastchat.conversation import Conversation
-from configs import LOG_PATH, TEMPERATURE
 import fastchat.constants
+from fastchat.conversation import Conversation
+
+from configs import LOG_PATH, TEMPERATURE
+
 fastchat.constants.LOGDIR = LOG_PATH
-from fastchat.serve.base_model_worker import BaseModelWorker
-import uuid
+import asyncio
 import json
 import sys
-from pydantic import BaseModel, root_validator
-import fastchat
-import asyncio
-from server.utils import get_model_worker_config
+import uuid
 from typing import Dict, List, Optional
 
+import fastchat
+from fastchat.serve.base_model_worker import BaseModelWorker
+from pydantic import BaseModel, root_validator
 
-__all__ = ["ApiModelWorker", "ApiChatParams", "ApiCompletionParams", "ApiEmbeddingsParams"]
+from server.utils import get_model_worker_config
+
+__all__ = [
+    "ApiModelWorker",
+    "ApiChatParams",
+    "ApiCompletionParams",
+    "ApiEmbeddingsParams",
+]
 
 
 class ApiConfigParams(BaseModel):
-    '''
+    """
     在线API配置参数，未提供的值会自动从model_config.ONLINE_LLM_MODEL中读取
-    '''
+    """
+
     api_base_url: Optional[str] = None
     api_proxy: Optional[str] = None
     api_key: Optional[str] = None
     secret_key: Optional[str] = None
-    group_id: Optional[str] = None # for minimax
-    is_pro: bool = False # for minimax
+    group_id: Optional[str] = None  # for minimax
+    is_pro: bool = False  # for minimax
 
-    APPID: Optional[str] = None # for xinghuo
-    APISecret: Optional[str] = None # for xinghuo
-    is_v2: bool = False # for xinghuo
+    APPID: Optional[str] = None  # for xinghuo
+    APISecret: Optional[str] = None  # for xinghuo
+    is_v2: bool = False  # for xinghuo
 
     worker_name: Optional[str] = None
 
@@ -54,14 +63,15 @@ class ApiConfigParams(BaseModel):
 
 
 class ApiModelParams(ApiConfigParams):
-    '''
+    """
     模型配置参数
-    '''
+    """
+
     version: Optional[str] = None
     version_url: Optional[str] = None
-    api_version: Optional[str] = None # for azure
-    deployment_name: Optional[str] = None # for azure
-    resource_name: Optional[str] = None # for azure
+    api_version: Optional[str] = None  # for azure
+    deployment_name: Optional[str] = None  # for azure
+    resource_name: Optional[str] = None  # for azure
 
     temperature: float = TEMPERATURE
     max_tokens: Optional[int] = None
@@ -69,12 +79,13 @@ class ApiModelParams(ApiConfigParams):
 
 
 class ApiChatParams(ApiModelParams):
-    '''
+    """
     chat请求参数
-    '''
+    """
+
     messages: List[Dict[str, str]]
-    system_message: Optional[str] = None # for minimax
-    role_meta: Dict = {} # for minimax
+    system_message: Optional[str] = None  # for minimax
+    role_meta: Dict = {}  # for minimax
 
 
 class ApiCompletionParams(ApiModelParams):
@@ -84,11 +95,11 @@ class ApiCompletionParams(ApiModelParams):
 class ApiEmbeddingsParams(ApiConfigParams):
     texts: List[str]
     embed_model: Optional[str] = None
-    to_query: bool = False # for minimax
+    to_query: bool = False  # for minimax
 
 
 class ApiModelWorker(BaseModelWorker):
-    DEFAULT_EMBED_MODEL: str = None # None means not support embedding
+    DEFAULT_EMBED_MODEL: str = None  # None means not support embedding
 
     def __init__(
         self,
@@ -102,12 +113,16 @@ class ApiModelWorker(BaseModelWorker):
         kwargs.setdefault("worker_id", uuid.uuid4().hex[:8])
         kwargs.setdefault("model_path", "")
         kwargs.setdefault("limit_worker_concurrency", 5)
-        super().__init__(model_names=model_names,
-                        controller_addr=controller_addr,
-                        worker_addr=worker_addr,
-                        **kwargs)
-        import fastchat.serve.base_model_worker
+        super().__init__(
+            model_names=model_names,
+            controller_addr=controller_addr,
+            worker_addr=worker_addr,
+            **kwargs,
+        )
         import sys
+
+        import fastchat.serve.base_model_worker
+
         self.logger = fastchat.serve.base_model_worker.logger
         # 恢复被fastchat覆盖的标准输出
         sys.stdout = sys.__stdout__
@@ -123,7 +138,6 @@ class ApiModelWorker(BaseModelWorker):
         if not no_register and self.controller_addr:
             self.init_heart_beat()
 
-
     def count_token(self, params):
         prompt = params["prompt"]
         return {"count": len(str(prompt)), "error_code": 0}
@@ -136,8 +150,13 @@ class ApiModelWorker(BaseModelWorker):
             if self._is_chat(prompt):
                 messages = self.prompt_to_messages(prompt)
                 messages = self.validate_messages(messages)
-            else: # 使用chat模仿续写功能，不支持历史消息
-                messages = [{"role": self.user_role, "content": f"please continue writing from here: {prompt}"}]
+            else:  # 使用chat模仿续写功能，不支持历史消息
+                messages = [
+                    {
+                        "role": self.user_role,
+                        "content": f"please continue writing from here: {prompt}",
+                    }
+                ]
 
             p = ApiChatParams(
                 messages=messages,
@@ -149,7 +168,12 @@ class ApiModelWorker(BaseModelWorker):
             for resp in self.do_chat(p):
                 yield self._jsonify(resp)
         except Exception as e:
-            yield self._jsonify({"error_code": 500, "text": f"{self.model_names[0]}请求API时发生错误：{e}"})
+            yield self._jsonify(
+                {
+                    "error_code": 500,
+                    "text": f"{self.model_names[0]}请求API时发生错误：{e}",
+                }
+            )
 
     def generate_gate(self, params):
         try:
@@ -159,14 +183,13 @@ class ApiModelWorker(BaseModelWorker):
         except Exception as e:
             return {"error_code": 500, "text": str(e)}
 
-
     # 需要用户自定义的方法
 
     def do_chat(self, params: ApiChatParams) -> Dict:
-        '''
+        """
         执行Chat的方法，默认使用模块里面的chat函数。
         要求返回形式：{"error_code": int, "text": str}
-        '''
+        """
         return {"error_code": 500, "text": f"{self.model_names[0]}未实现chat功能"}
 
     # def do_completion(self, p: ApiCompletionParams) -> Dict:
@@ -177,28 +200,29 @@ class ApiModelWorker(BaseModelWorker):
     #     return {"error_code": 500, "text": f"{self.model_names[0]}未实现completion功能"}
 
     def do_embeddings(self, params: ApiEmbeddingsParams) -> Dict:
-        '''
+        """
         执行Embeddings的方法，默认使用模块里面的embed_documents函数。
         要求返回形式：{"code": int, "data": List[List[float]], "msg": str}
-        '''
+        """
         return {"code": 500, "msg": f"{self.model_names[0]}未实现embeddings功能"}
 
     def get_embeddings(self, params):
         # fastchat对LLM做Embeddings限制很大，似乎只能使用openai的。
         # 在前端通过OpenAIEmbeddings发起的请求直接出错，无法请求过来。
-        print("get_embedding")
-        print(params)
+        logger.debug("get_embedding")
+        logger.debug(params)
 
-    def make_conv_template(self, conv_template: str = None, model_path: str = None) -> Conversation:
+    def make_conv_template(
+        self, conv_template: str = None, model_path: str = None
+    ) -> Conversation:
         raise NotImplementedError
 
     def validate_messages(self, messages: List[Dict]) -> List[Dict]:
-        '''
+        """
         有些API对mesages有特殊格式，可以重写该函数替换默认的messages。
         之所以跟prompt_to_messages分开，是因为他们应用场景不同、参数不同
-        '''
+        """
         return messages
-
 
     # help methods
     @property
@@ -210,23 +234,23 @@ class ApiModelWorker(BaseModelWorker):
         return self.conv.roles[1]
 
     def _jsonify(self, data: Dict) -> str:
-        '''
+        """
         将chat函数返回的结果按照fastchat openai-api-server的格式返回
-        '''
+        """
         return json.dumps(data, ensure_ascii=False).encode() + b"\0"
 
     def _is_chat(self, prompt: str) -> bool:
-        '''
+        """
         检查prompt是否由chat messages拼接而来
         TODO: 存在误判的可能，也许从fastchat直接传入原始messages是更好的做法
-        '''
+        """
         key = f"{self.conv.sep}{self.user_role}:"
         return key in prompt
 
     def prompt_to_messages(self, prompt: str) -> List[Dict]:
-        '''
+        """
         将prompt字符串拆分成messages.
-        '''
+        """
         result = []
         user_role = self.user_role
         ai_role = self.ai_role
@@ -234,10 +258,10 @@ class ApiModelWorker(BaseModelWorker):
         ai_start = ai_role + ":"
         for msg in prompt.split(self.conv.sep)[1:-1]:
             if msg.startswith(user_start):
-                if content := msg[len(user_start):].strip():
+                if content := msg[len(user_start) :].strip():
                     result.append({"role": user_role, "content": content})
             elif msg.startswith(ai_start):
-                if content := msg[len(ai_start):].strip():
+                if content := msg[len(ai_start) :].strip():
                     result.append({"role": ai_role, "content": content})
             else:
                 raise RuntimeError(f"unknown role in msg: {msg}")

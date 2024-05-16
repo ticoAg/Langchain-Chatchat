@@ -1,14 +1,15 @@
-import sys
-from fastchat.conversation import Conversation
-from server.model_workers.base import *
-from server.utils import get_httpx_client
-from cachetools import cached, TTLCache
 import json
-from fastchat import conversation as conv
 import sys
+from typing import Dict, List, Literal
+
+from cachetools import TTLCache, cached
+from fastchat import conversation as conv
+from fastchat.conversation import Conversation
+
+from configs import log_verbose, logger
+from server.model_workers.base import *
 from server.model_workers.base import ApiEmbeddingsParams
-from typing import List, Literal, Dict
-from configs import logger, log_verbose
+from server.utils import get_httpx_client
 
 MODEL_VERSIONS = {
     "ernie-bot-4": "completions_pro",
@@ -39,7 +40,6 @@ MODEL_VERSIONS = {
     # "mpt-30b-instruct": "", # 暂未发布
     # "OA-Pythia-12B-SFT-4": "", # 暂未发布
     # "xverse-13b": "", # 暂未发布
-
     # # 以下为企业测试，需要单独申请
     # "flan-ul2": "",
     # "Cerebras-GPT-6.7B": ""
@@ -54,38 +54,49 @@ def get_baidu_access_token(api_key: str, secret_key: str) -> str:
     :return: access_token，或是None(如果错误)
     """
     url = "https://aip.baidubce.com/oauth/2.0/token"
-    params = {"grant_type": "client_credentials", "client_id": api_key, "client_secret": secret_key}
+    params = {
+        "grant_type": "client_credentials",
+        "client_id": api_key,
+        "client_secret": secret_key,
+    }
     try:
         with get_httpx_client() as client:
             return client.get(url, params=params).json().get("access_token")
     except Exception as e:
-        print(f"failed to get token from baidu: {e}")
+        logger.debug(f"failed to get token from baidu: {e}")
 
 
 class QianFanWorker(ApiModelWorker):
     """
     百度千帆
     """
+
     DEFAULT_EMBED_MODEL = "embedding-v1"
 
     def __init__(
-            self,
-            *,
-            version: Literal["ernie-bot", "ernie-bot-turbo"] = "ernie-bot",
-            model_names: List[str] = ["qianfan-api"],
-            controller_addr: str = None,
-            worker_addr: str = None,
-            **kwargs,
+        self,
+        *,
+        version: Literal["ernie-bot", "ernie-bot-turbo"] = "ernie-bot",
+        model_names: List[str] = ["qianfan-api"],
+        controller_addr: str = None,
+        worker_addr: str = None,
+        **kwargs,
     ):
-        kwargs.update(model_names=model_names, controller_addr=controller_addr, worker_addr=worker_addr)
+        kwargs.update(
+            model_names=model_names,
+            controller_addr=controller_addr,
+            worker_addr=worker_addr,
+        )
         kwargs.setdefault("context_len", 16384)
         super().__init__(**kwargs)
         self.version = version
 
     def do_chat(self, params: ApiChatParams) -> Dict:
         params.load_config(self.model_names[0])
-        BASE_URL = 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat' \
-                   '/{model_version}?access_token={access_token}'
+        BASE_URL = (
+            "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat"
+            "/{model_version}?access_token={access_token}"
+        )
 
         access_token = get_baidu_access_token(params.api_key, params.secret_key)
         if not access_token:
@@ -101,18 +112,18 @@ class QianFanWorker(ApiModelWorker):
         payload = {
             "messages": params.messages,
             "temperature": params.temperature,
-            "stream": True
+            "stream": True,
         }
         headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
+            "Content-Type": "application/json",
+            "Accept": "application/json",
         }
 
         text = ""
         if log_verbose:
-            logger.info(f'{self.__class__.__name__}:data: {payload}')
-            logger.info(f'{self.__class__.__name__}:url: {url}')
-            logger.info(f'{self.__class__.__name__}:headers: {headers}')
+            logger.info(f"{self.__class__.__name__}:data: {payload}")
+            logger.info(f"{self.__class__.__name__}:url: {url}")
+            logger.info(f"{self.__class__.__name__}:headers: {headers}")
 
         with get_httpx_client() as client:
             with client.stream("POST", url, headers=headers, json=payload) as response:
@@ -125,10 +136,7 @@ class QianFanWorker(ApiModelWorker):
 
                     if "result" in resp.keys():
                         text += resp["result"]
-                        yield {
-                            "error_code": 0,
-                            "text": text
-                        }
+                        yield {"error_code": 0, "text": text}
                     else:
                         data = {
                             "error_code": resp["error_code"],
@@ -138,7 +146,7 @@ class QianFanWorker(ApiModelWorker):
                                 "type": "invalid_request_error",
                                 "param": None,
                                 "code": None,
-                            }
+                            },
                         }
                         self.logger.error(f"请求千帆 API 时发生错误：{data}")
                         yield data
@@ -159,14 +167,14 @@ class QianFanWorker(ApiModelWorker):
         access_token = get_baidu_access_token(params.api_key, params.secret_key)
         url = f"https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/embeddings/{embed_model}?access_token={access_token}"
         if log_verbose:
-            logger.info(f'{self.__class__.__name__}:url: {url}')
+            logger.info(f"{self.__class__.__name__}:url: {url}")
 
         with get_httpx_client() as client:
             result = []
             i = 0
             batch_size = 10
             while i < len(params.texts):
-                texts = params.texts[i:i + batch_size]
+                texts = params.texts[i : i + batch_size]
                 resp = client.post(url, json={"input": texts}).json()
                 if "error_code" in resp:
                     data = {
@@ -177,7 +185,7 @@ class QianFanWorker(ApiModelWorker):
                             "type": "invalid_request_error",
                             "param": None,
                             "code": None,
-                        }
+                        },
                     }
                     self.logger.error(f"请求千帆 API 时发生错误：{data}")
                     return data
@@ -188,10 +196,12 @@ class QianFanWorker(ApiModelWorker):
             return {"code": 200, "data": result}
 
     def get_embeddings(self, params):
-        print("embedding")
-        print(params)
+        logger.debug("embedding")
+        logger.debug(params)
 
-    def make_conv_template(self, conv_template: str = None, model_path: str = None) -> Conversation:
+    def make_conv_template(
+        self, conv_template: str = None, model_path: str = None
+    ) -> Conversation:
         return conv.Conversation(
             name=self.model_names[0],
             system_message="你是一个聪明的助手，请根据用户的提示来完成任务",
@@ -204,12 +214,12 @@ class QianFanWorker(ApiModelWorker):
 
 if __name__ == "__main__":
     import uvicorn
-    from server.utils import MakeFastAPIOffline
     from fastchat.serve.model_worker import app
 
+    from server.utils import MakeFastAPIOffline
+
     worker = QianFanWorker(
-        controller_addr="http://127.0.0.1:20001",
-        worker_addr="http://127.0.0.1:21004"
+        controller_addr="http://127.0.0.1:20001", worker_addr="http://127.0.0.1:21004"
     )
     sys.modules["fastchat.serve.model_worker"].worker = worker
     MakeFastAPIOffline(app)

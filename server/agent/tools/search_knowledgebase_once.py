@@ -1,41 +1,47 @@
 from __future__ import annotations
+
+import json
+import os
 import re
+import sys
 import warnings
-from typing import Dict
+from typing import Any, Dict, List, Optional
 
 from langchain.callbacks.manager import (
     AsyncCallbackManagerForChainRun,
     CallbackManagerForChainRun,
 )
 from langchain.chains.llm import LLMChain
+from langchain.prompts import PromptTemplate
 from langchain.pydantic_v1 import Extra, root_validator
 from langchain.schema import BasePromptTemplate
 from langchain.schema.language_model import BaseLanguageModel
-from typing import List, Any, Optional
-from langchain.prompts import PromptTemplate
-import sys
-import os
-import json
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from server.chat.knowledge_base_chat import knowledge_base_chat
-from configs import VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD, MAX_TOKENS
-
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 import asyncio
-from server.agent import model_container
+
 from pydantic import BaseModel, Field
 
+from configs import MAX_TOKENS, SCORE_THRESHOLD, VECTOR_SEARCH_TOP_K
+from server.agent import model_container
+from server.chat.knowledge_base_chat import knowledge_base_chat
+
+
 async def search_knowledge_base_iter(database: str, query: str):
-    response = await knowledge_base_chat(query=query,
-                                         knowledge_base_name=database,
-                                         model_name=model_container.MODEL.model_name,
-                                         temperature=0.01,
-                                         history=[],
-                                         top_k=VECTOR_SEARCH_TOP_K,
-                                         max_tokens=MAX_TOKENS,
-                                         prompt_name="knowledge_base_chat",
-                                         score_threshold=SCORE_THRESHOLD,
-                                         stream=False)
+    response = await knowledge_base_chat(
+        query=query,
+        knowledge_base_name=database,
+        model_name=model_container.MODEL.model_name,
+        temperature=0.01,
+        history=[],
+        top_k=VECTOR_SEARCH_TOP_K,
+        max_tokens=MAX_TOKENS,
+        prompt_name="knowledge_base_chat",
+        score_threshold=SCORE_THRESHOLD,
+        stream=False,
+    )
 
     contents = ""
     async for data in response.body_iterator:  # 这里的data是一个json字符串
@@ -125,10 +131,7 @@ class LLMKnowledgeChain(LLMChain):
         return output
 
     def _process_llm_result(
-            self,
-            llm_output: str,
-            llm_input: str,
-            run_manager: CallbackManagerForChainRun
+        self, llm_output: str, llm_input: str, run_manager: CallbackManagerForChainRun
     ) -> Dict[str, str]:
 
         run_manager.on_text(llm_output, color="green", verbose=self.verbose)
@@ -150,9 +153,9 @@ class LLMKnowledgeChain(LLMChain):
         return {self.output_key: answer}
 
     async def _aprocess_llm_result(
-            self,
-            llm_output: str,
-            run_manager: AsyncCallbackManagerForChainRun,
+        self,
+        llm_output: str,
+        run_manager: AsyncCallbackManagerForChainRun,
     ) -> Dict[str, str]:
         await run_manager.on_text(llm_output, color="green", verbose=self.verbose)
         llm_output = llm_output.strip()
@@ -172,36 +175,44 @@ class LLMKnowledgeChain(LLMChain):
         return {self.output_key: answer}
 
     def _call(
-            self,
-            inputs: Dict[str, str],
-            run_manager: Optional[CallbackManagerForChainRun] = None,
+        self,
+        inputs: Dict[str, str],
+        run_manager: Optional[CallbackManagerForChainRun] = None,
     ) -> Dict[str, str]:
         _run_manager = run_manager or CallbackManagerForChainRun.get_noop_manager()
         _run_manager.on_text(inputs[self.input_key])
-        data_formatted_str = ',\n'.join([f' "{k}":"{v}"' for k, v in self.database_names.items()])
+        data_formatted_str = ",\n".join(
+            [f' "{k}":"{v}"' for k, v in self.database_names.items()]
+        )
         llm_output = self.llm_chain.predict(
             database_names=data_formatted_str,
             question=inputs[self.input_key],
             stop=["```output"],
             callbacks=_run_manager.get_child(),
         )
-        return self._process_llm_result(llm_output, inputs[self.input_key], _run_manager)
+        return self._process_llm_result(
+            llm_output, inputs[self.input_key], _run_manager
+        )
 
     async def _acall(
-            self,
-            inputs: Dict[str, str],
-            run_manager: Optional[AsyncCallbackManagerForChainRun] = None,
+        self,
+        inputs: Dict[str, str],
+        run_manager: Optional[AsyncCallbackManagerForChainRun] = None,
     ) -> Dict[str, str]:
         _run_manager = run_manager or AsyncCallbackManagerForChainRun.get_noop_manager()
         await _run_manager.on_text(inputs[self.input_key])
-        data_formatted_str = ',\n'.join([f' "{k}":"{v}"' for k, v in self.database_names.items()])
+        data_formatted_str = ",\n".join(
+            [f' "{k}":"{v}"' for k, v in self.database_names.items()]
+        )
         llm_output = await self.llm_chain.apredict(
             database_names=data_formatted_str,
             question=inputs[self.input_key],
             stop=["```output"],
             callbacks=_run_manager.get_child(),
         )
-        return await self._aprocess_llm_result(llm_output, inputs[self.input_key], _run_manager)
+        return await self._aprocess_llm_result(
+            llm_output, inputs[self.input_key], _run_manager
+        )
 
     @property
     def _chain_type(self) -> str:
@@ -209,10 +220,10 @@ class LLMKnowledgeChain(LLMChain):
 
     @classmethod
     def from_llm(
-            cls,
-            llm: BaseLanguageModel,
-            prompt: BasePromptTemplate = PROMPT,
-            **kwargs: Any,
+        cls,
+        llm: BaseLanguageModel,
+        prompt: BasePromptTemplate = PROMPT,
+        **kwargs: Any,
     ) -> LLMKnowledgeChain:
         llm_chain = LLMChain(llm=llm, prompt=prompt)
         return cls(llm_chain=llm_chain, **kwargs)
@@ -231,4 +242,4 @@ class KnowledgeSearchInput(BaseModel):
 
 if __name__ == "__main__":
     result = search_knowledgebase_once("大数据的男女比例")
-    print(result)
+    logger.debug(result)

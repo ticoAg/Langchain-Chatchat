@@ -1,5 +1,7 @@
 from typing import List
+
 from langchain.document_loaders.unstructured import UnstructuredFileLoader
+
 from document_loaders.ocr import get_ocr
 
 
@@ -16,10 +18,11 @@ class RapidOCRLoader(UnstructuredFileLoader):
 
         text = img2text(self.file_path)
         from unstructured.partition.text import partition_text
+
         return partition_text(text=text, **self.unstructured_kwargs)
 
 
 if __name__ == "__main__":
     loader = RapidOCRLoader(file_path="../tests/samples/ocr_test.jpg")
     docs = loader.load()
-    print(docs)
+    logger.debug(docs)

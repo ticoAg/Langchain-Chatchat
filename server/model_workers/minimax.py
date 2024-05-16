@@ -1,12 +1,14 @@
-from fastchat.conversation import Conversation
-from server.model_workers.base import *
-from fastchat import conversation as conv
-import sys
 import json
+import sys
+from typing import Dict, List
+
+from fastchat import conversation as conv
+from fastchat.conversation import Conversation
+
+from configs import log_verbose, logger
+from server.model_workers.base import *
 from server.model_workers.base import ApiEmbeddingsParams
 from server.utils import get_httpx_client
-from typing import List, Dict
-from configs import logger, log_verbose
 
 
 class MiniMaxWorker(ApiModelWorker):
@@ -21,7 +23,11 @@ class MiniMaxWorker(ApiModelWorker):
         version: str = "abab5.5-chat",
         **kwargs,
     ):
-        kwargs.update(model_names=model_names, controller_addr=controller_addr, worker_addr=worker_addr)
+        kwargs.update(
+            model_names=model_names,
+            controller_addr=controller_addr,
+            worker_addr=worker_addr,
+        )
         kwargs.setdefault("context_len", 16384)
         super().__init__(**kwargs)
         self.version = version
@@ -32,14 +38,17 @@ class MiniMaxWorker(ApiModelWorker):
             "assistant": self.ai_role,
             "system": "system",
         }
-        messages = [{"sender_type": role_maps[x["role"]], "text": x["content"]} for x in messages]
+        messages = [
+            {"sender_type": role_maps[x["role"]], "text": x["content"]}
+            for x in messages
+        ]
         return messages
 
     def do_chat(self, params: ApiChatParams) -> Dict:
         # 按照官网推荐，直接调用abab 5.5模型
         params.load_config(self.model_names[0])
 
-        url = 'https://api.minimax.chat/v1/text/chatcompletion{pro}?GroupId={group_id}'
+        url = "https://api.minimax.chat/v1/text/chatcompletion{pro}?GroupId={group_id}"
         pro = "_pro" if params.is_pro else ""
         headers = {
             "Authorization": f"Bearer {params.api_key}",
@@ -60,28 +69,32 @@ class MiniMaxWorker(ApiModelWorker):
             # "role_meta": params.role_meta,
         }
         if log_verbose:
-            logger.info(f'{self.__class__.__name__}:data: {data}')
-            logger.info(f'{self.__class__.__name__}:url: {url.format(pro=pro, group_id=params.group_id)}')
-            logger.info(f'{self.__class__.__name__}:headers: {headers}')
+            logger.info(f"{self.__class__.__name__}:data: {data}")
+            logger.info(
+                f"{self.__class__.__name__}:url: {url.format(pro=pro, group_id=params.group_id)}"
+            )
+            logger.info(f"{self.__class__.__name__}:headers: {headers}")
 
         with get_httpx_client() as client:
-            response = client.stream("POST",
-                                    url.format(pro=pro, group_id=params.group_id),
-                                    headers=headers,
-                                    json=data)
+            response = client.stream(
+                "POST",
+                url.format(pro=pro, group_id=params.group_id),
+                headers=headers,
+                json=data,
+            )
             with response as r:
                 text = ""
                 for e in r.iter_text():
                     if not e.startswith("data: "):
                         data = {
-                                "error_code": 500,
-                                "text": f"minimax返回错误的结果：{e}",
-                                "error": {
-                                    "message":  f"minimax返回错误的结果：{e}",
-                                    "type": "invalid_request_error",
-                                    "param": None,
-                                    "code": None,
-                                }
+                            "error_code": 500,
+                            "text": f"minimax返回错误的结果：{e}",
+                            "error": {
+                                "message": f"minimax返回错误的结果：{e}",
+                                "type": "invalid_request_error",
+                                "param": None,
+                                "code": None,
+                            },
                         }
                         self.logger.error(f"请求 MiniMax API 时发生错误：{data}")
                         yield data
@@ -111,41 +124,43 @@ class MiniMaxWorker(ApiModelWorker):
             "type": "query" if params.to_query else "db",
         }
         if log_verbose:
-            logger.info(f'{self.__class__.__name__}:data: {data}')
-            logger.info(f'{self.__class__.__name__}:url: {url}')
-            logger.info(f'{self.__class__.__name__}:headers: {headers}')
+            logger.info(f"{self.__class__.__name__}:data: {data}")
+            logger.info(f"{self.__class__.__name__}:url: {url}")
+            logger.info(f"{self.__class__.__name__}:headers: {headers}")
 
         with get_httpx_client() as client:
             result = []
             i = 0
             batch_size = 10
             while i < len(params.texts):
-                texts = params.texts[i:i+batch_size]
+                texts = params.texts[i : i + batch_size]
                 data["texts"] = texts
                 r = client.post(url, headers=headers, json=data).json()
                 if embeddings := r.get("vectors"):
                     result += embeddings
                 elif error := r.get("base_resp"):
                     data = {
-                                "code": error["status_code"],
-                                "msg": error["status_msg"],
-                                "error": {
-                                    "message":  error["status_msg"],
-                                    "type": "invalid_request_error",
-                                    "param": None,
-                                    "code": None,
-                                }
-                            }
+                        "code": error["status_code"],
+                        "msg": error["status_msg"],
+                        "error": {
+                            "message": error["status_msg"],
+                            "type": "invalid_request_error",
+                            "param": None,
+                            "code": None,
+                        },
+                    }
                     self.logger.error(f"请求 MiniMax API 时发生错误：{data}")
                     return data
                 i += batch_size
             return {"code": 200, "data": result}
 
     def get_embeddings(self, params):
-        print("embedding")
-        print(params)
+        logger.debug("embedding")
+        logger.debug(params)
 
-    def make_conv_template(self, conv_template: str = None, model_path: str = None) -> Conversation:
+    def make_conv_template(
+        self, conv_template: str = None, model_path: str = None
+    ) -> Conversation:
         return conv.Conversation(
             name=self.model_names[0],
             system_message="你是MiniMax自主研发的大型语言模型，回答问题简洁有条理。",
@@ -158,8 +173,9 @@ class MiniMaxWorker(ApiModelWorker):
 
 if __name__ == "__main__":
     import uvicorn
-    from server.utils import MakeFastAPIOffline
     from fastchat.serve.model_worker import app
+
+    from server.utils import MakeFastAPIOffline
 
     worker = MiniMaxWorker(
         controller_addr="http://127.0.0.1:20001",

@@ -1,24 +1,33 @@
+import os
+from typing import List, Literal
+
+from dateutil.parser import parse
+
 from configs import (
-    EMBEDDING_MODEL, DEFAULT_VS_TYPE, ZH_TITLE_ENHANCE,
-    CHUNK_SIZE, OVERLAP_SIZE,
-    logger, log_verbose
+    CHUNK_SIZE,
+    DEFAULT_VS_TYPE,
+    EMBEDDING_MODEL,
+    OVERLAP_SIZE,
+    ZH_TITLE_ENHANCE,
+    log_verbose,
+    logger,
 )
-from server.knowledge_base.utils import (
-    get_file_path, list_kbs_from_folder,
-    list_files_from_folder, files2docs_in_thread,
-    KnowledgeFile
-)
-from server.knowledge_base.kb_service.base import KBServiceFactory
+from server.db.base import Base, engine
 from server.db.models.conversation_model import ConversationModel
 from server.db.models.message_model import MessageModel
-from server.db.repository.knowledge_file_repository import add_file_to_db # ensure Models are imported
+from server.db.repository.knowledge_file_repository import (
+    add_file_to_db,
+)  # ensure Models are imported
 from server.db.repository.knowledge_metadata_repository import add_summary_to_db
-
-from server.db.base import Base, engine
 from server.db.session import session_scope
-import os
-from dateutil.parser import parse
-from typing import Literal, List
+from server.knowledge_base.kb_service.base import KBServiceFactory
+from server.knowledge_base.utils import (
+    KnowledgeFile,
+    files2docs_in_thread,
+    get_file_path,
+    list_files_from_folder,
+    list_kbs_from_folder,
+)
 
 
 def create_tables():
@@ -31,8 +40,8 @@ def reset_tables():
 
 
 def import_from_db(
-        sqlite_path: str = None,
-        # csv_path: str = None,
+    sqlite_path: str = None,
+    # csv_path: str = None,
 ) -> bool:
     """
     在知识库与向量库无变化的情况下，从备份数据库中导入数据到 info.db。
@@ -49,12 +58,17 @@ def import_from_db(
         con = sql.connect(sqlite_path)
         con.row_factory = sql.Row
         cur = con.cursor()
-        tables = [x["name"] for x in cur.execute("select name from sqlite_master where type='table'").fetchall()]
+        tables = [
+            x["name"]
+            for x in cur.execute(
+                "select name from sqlite_master where type='table'"
+            ).fetchall()
+        ]
         for model in models:
             table = model.local_table.fullname
             if table not in tables:
                 continue
-            print(f"processing table: {table}")
+            logger.debug(f"processing table: {table}")
             with session_scope() as session:
                 for row in cur.execute(f"select * from {table}").fetchall():
                     data = {k: row[k] for k in row.keys() if k in model.columns}
@@ -65,7 +79,7 @@ def import_from_db(
         con.close()
         return True
     except Exception as e:
-        print(f"无法读取备份数据库：{sqlite_path}。错误信息：{e}")
+        logger.debug(f"无法读取备份数据库：{sqlite_path}。错误信息：{e}")
         return False
 
 
@@ -77,19 +91,20 @@ def file_to_kbfile(kb_name: str, files: List[str]) -> List[KnowledgeFile]:
             kb_files.append(kb_file)
         except Exception as e:
             msg = f"{e}，已跳过"
-            logger.error(f'{e.__class__.__name__}: {msg}',
-                         exc_info=e if log_verbose else None)
+            logger.error(
+                f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None
+            )
     return kb_files
 
 
 def folder2db(
-        kb_names: List[str],
-        mode: Literal["recreate_vs", "update_in_db", "increment"],
-        vs_type: Literal["faiss", "milvus", "pg", "chromadb"] = DEFAULT_VS_TYPE,
-        embed_model: str = EMBEDDING_MODEL,
-        chunk_size: int = CHUNK_SIZE,
-        chunk_overlap: int = OVERLAP_SIZE,
-        zh_title_enhance: bool = ZH_TITLE_ENHANCE,
+    kb_names: List[str],
+    mode: Literal["recreate_vs", "update_in_db", "increment"],
+    vs_type: Literal["faiss", "milvus", "pg", "chromadb"] = DEFAULT_VS_TYPE,
+    embed_model: str = EMBEDDING_MODEL,
+    chunk_size: int = CHUNK_SIZE,
+    chunk_overlap: int = OVERLAP_SIZE,
+    zh_title_enhance: bool = ZH_TITLE_ENHANCE,
 ):
     """
     use existed files in local folder to populate database and/or vector store.
@@ -101,18 +116,22 @@ def folder2db(
     """
 
     def files2vs(kb_name: str, kb_files: List[KnowledgeFile]):
-        for success, result in files2docs_in_thread(kb_files,
-                                                    chunk_size=chunk_size,
-                                                    chunk_overlap=chunk_overlap,
-                                                    zh_title_enhance=zh_title_enhance):
+        for success, result in files2docs_in_thread(
+            kb_files,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            zh_title_enhance=zh_title_enhance,
+        ):
             if success:
                 _, filename, docs = result
-                print(f"正在将 {kb_name}/{filename} 添加到向量库，共包含{len(docs)}条文档")
+                logger.debug(
+                    f"正在将 {kb_name}/{filename} 添加到向量库，共包含{len(docs)}条文档"
+                )
                 kb_file = KnowledgeFile(filename=filename, knowledge_base_name=kb_name)
                 kb_file.splited_docs = docs
                 kb.add_doc(kb_file=kb_file, not_refresh_vs_cache=True)
             else:
-                print(result)
+                logger.debug(result)
 
     kb_names = kb_names or list_kbs_from_folder()
     for kb_name in kb_names:
@@ -134,7 +153,7 @@ def folder2db(
         #     kb_files = file_to_kbfile(kb_name, files)
         #     for kb_file in kb_files:
         #         add_file_to_db(kb_file)
-        #         print(f"已将 {kb_name}/{kb_file.filename} 添加到数据库")
+        #         logger.debug(f"已将 {kb_name}/{kb_file.filename} 添加到数据库")
         # 以数据库中文件列表为基准，利用本地文件更新向量库
         elif mode == "update_in_db":
             files = kb.list_files()
@@ -150,7 +169,7 @@ def folder2db(
             files2vs(kb_name, kb_files)
             kb.save_vector_store()
         else:
-            print(f"unsupported migrate mode: {mode}")
+            logger.debug(f"unsupported migrate mode: {mode}")
 
 
 def prune_db_docs(kb_names: List[str]):
@@ -167,7 +186,9 @@ def prune_db_docs(kb_names: List[str]):
             kb_files = file_to_kbfile(kb_name, files)
             for kb_file in kb_files:
                 kb.delete_doc(kb_file, not_refresh_vs_cache=True)
-                print(f"success to delete docs for file: {kb_name}/{kb_file.filename}")
+                logger.debug(
+                    f"success to delete docs for file: {kb_name}/{kb_file.filename}"
+                )
             kb.save_vector_store()
 
 
@@ -184,4 +205,4 @@ def prune_folder_files(kb_names: List[str]):
             files = list(set(files_in_folder) - set(files_in_db))
             for file in files:
                 os.remove(get_file_path(kb_name, file))
-                print(f"success to delete file: {kb_name}/{file}")
+                logger.debug(f"success to delete file: {kb_name}/{file}")
