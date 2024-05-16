@@ -4,14 +4,26 @@ from typing import Dict, List, Optional, Tuple
 
 from langchain.docstore.document import Document
 
-from configs import SCORE_THRESHOLD
+from configs import (
+    RERANKER_THRESHOLD,
+    RERANKER_TOP_K,
+    SCORE_THRESHOLD,
+    USE_RERANKER,
+    logger,
+)
 from server.knowledge_base.kb_cache.faiss_cache import ThreadSafeFaiss, kb_faiss_pool
 from server.knowledge_base.kb_service.base import (
     EmbeddingsFunAdapter,
     KBService,
+    ReRankerAdapter,
     SupportedVSType,
 )
-from server.knowledge_base.utils import KnowledgeFile, get_kb_path, get_vs_path
+from server.knowledge_base.utils import (
+    KnowledgeFile,
+    filter_docs,
+    get_kb_path,
+    get_vs_path,
+)
 from server.utils import torch_gc
 
 
@@ -69,6 +81,10 @@ class FaissKBService(KBService):
         query: str,
         top_k: int,
         score_threshold: float = SCORE_THRESHOLD,
+        use_reranker: bool = USE_RERANKER,
+        rerank_threshold: float = RERANKER_THRESHOLD,
+        rerank_top_k: Optional[int] = RERANKER_TOP_K,
+        metadata: Dict = {},
     ) -> List[Tuple[Document, float]]:
         embed_func = EmbeddingsFunAdapter(self.embed_model)
         embeddings = embed_func.embed_query(query)
@@ -76,6 +92,11 @@ class FaissKBService(KBService):
             docs = vs.similarity_search_with_score_by_vector(
                 embeddings, k=top_k, score_threshold=score_threshold
             )
+        if metadata:
+            docs = filter_docs(metadata, docs)
+        if use_reranker and docs:
+            rerank_func = ReRankerAdapter(self.reranker_model)
+            docs = rerank_func.rerank(query, docs, rerank_threshold, rerank_top_k)
         return docs
 
     def do_add_doc(

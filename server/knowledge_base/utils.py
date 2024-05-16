@@ -20,6 +20,7 @@ from configs import (
     logger,
     text_splitter_dict,
 )
+from server.db.models.knowledge_file_model import FileDocModel
 from server.utils import get_model_worker_config, run_in_thread_pool
 from text_splitter import zh_title_enhance as func_zh_title_enhance
 
@@ -162,6 +163,27 @@ class JSONLinesLoader(langchain.document_loaders.JSONLoader):
 
 
 langchain.document_loaders.JSONLinesLoader = JSONLinesLoader
+
+
+def filter_docs(metadata: Dict, docs: List[Tuple[Document, float]]) -> List[Document]:
+    """
+    根据metadata筛选逻辑, 将条件值和doc的标签值都转为list,存在交集的筛选出
+    """
+    _docs = []
+    for doc in docs:
+        for k, v in metadata.items():
+            if isinstance(doc, FileDocModel):
+                _tag_doc = doc.meta_data.get(k) if doc.meta_data.get(k) else []
+            elif isinstance(doc, tuple):
+                _tag_doc = doc[0].metadata.get(k) if doc[0].metadata.get(k) else []
+            tag_doc = _tag_doc if isinstance(_tag_doc, list) else [_tag_doc]
+            tag_query = v if isinstance(v, list) else [v]
+            if not tag_doc:
+                continue
+            if set(tag_query).intersection(tag_doc):
+                _docs.append(doc)
+                break
+    return _docs
 
 
 def get_LoaderClass(file_extension):

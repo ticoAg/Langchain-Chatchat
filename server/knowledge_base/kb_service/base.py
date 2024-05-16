@@ -11,9 +11,14 @@ from langchain.embeddings.base import Embeddings
 from configs import (
     EMBEDDING_MODEL,
     KB_INFO,
+    RERANKER_MODEL,
+    RERANKER_THRESHOLD,
+    RERANKER_TOP_K,
     SCORE_THRESHOLD,
+    USE_RERANKER,
     VECTOR_SEARCH_TOP_K,
     kbs_config,
+    logger,
 )
 from server.db.repository.knowledge_base_repository import (
     add_kb_to_db,
@@ -33,7 +38,12 @@ from server.db.repository.knowledge_file_repository import (
     list_docs_from_db,
     list_files_from_db,
 )
-from server.embeddings_api import aembed_texts, embed_documents, embed_texts
+from server.embeddings_api import (
+    aembed_texts,
+    embed_documents,
+    embed_texts,
+    rerank_documents,
+)
 from server.knowledge_base.model.kb_document_model import DocumentWithVSId
 from server.knowledge_base.utils import (
     KnowledgeFile,
@@ -70,12 +80,14 @@ class KBService(ABC):
         self,
         knowledge_base_name: str,
         embed_model: str = EMBEDDING_MODEL,
+        reranker_model: str = RERANKER_MODEL,
     ):
         self.kb_name = knowledge_base_name
         self.kb_info = KB_INFO.get(
             knowledge_base_name, f"关于{knowledge_base_name}的知识库"
         )
         self.embed_model = embed_model
+        self.reranker_model = reranker_model
         self.kb_path = get_kb_path(self.kb_name)
         self.doc_path = get_doc_path(self.kb_name)
         self.do_init()
@@ -207,8 +219,20 @@ class KBService(ABC):
         query: str,
         top_k: int = VECTOR_SEARCH_TOP_K,
         score_threshold: float = SCORE_THRESHOLD,
+        use_reranker: bool = USE_RERANKER,
+        rerank_threshold: float = RERANKER_THRESHOLD,
+        rerank_top_k: int = RERANKER_TOP_K,
+        metadata: Dict = {},
     ) -> List[Document]:
-        docs = self.do_search(query, top_k, score_threshold)
+        docs = self.do_search(
+            query,
+            top_k,
+            score_threshold,
+            use_reranker,
+            rerank_threshold,
+            rerank_top_k,
+            metadata,
+        )
         return docs
 
     def get_doc_by_ids(self, ids: List[str]) -> List[Document]:
@@ -536,3 +560,21 @@ def score_threshold_process(score_threshold, k, docs):
             if cmp(similarity, score_threshold)
         ]
     return docs[:k]
+
+
+class ReRankerAdapter:
+    def __init__(self, reranker_model: str = RERANKER_MODEL):
+        self.reranker = reranker_model
+
+    def rerank(self, query: str, docs: List[Document], rerank_threshold, rerank_top_k):
+        rerank_results = rerank_documents(
+            rerank_model=self.reranker,
+            query=query,
+            docs=docs,
+            rerank_threshold=rerank_threshold,
+            rerank_top_k=rerank_top_k,
+        )
+        return rerank_results
+
+    async def arerank(self, query: str, docs: List[Document]):
+        pass

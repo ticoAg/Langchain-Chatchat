@@ -5,17 +5,22 @@ import os
 # 如果模型目录名称和 MODEL_PATH 中的 key 或 value 相同，程序会自动检测加载，无需修改 MODEL_PATH 中的路径。
 MODEL_ROOT_PATH = ""
 
+device = "auto"
 # 选用的 Embedding 名称
-EMBEDDING_MODEL = "bge-large-zh-v1.5"
+# EMBEDDING_MODEL = "bge-large-zh-v1.5"
+EMBEDDING_MODEL = "bce-embedding-base-v1"
 
 # Embedding 模型运行设备。设为 "auto" 会自动检测(会有警告)，也可手动设定为 "cuda","mps","cpu","xpu" 其中之一。
-EMBEDDING_DEVICE = "auto"
+EMBEDDING_DEVICE = device
 
 # 选用的reranker模型
-RERANKER_MODEL = "bge-reranker-large"
+RERANKER_MODEL = "bce-reranker-base-v1"
 # 是否启用reranker模型
 USE_RERANKER = False
 RERANKER_MAX_LENGTH = 1024
+RERANKER_DEVICE = device
+RERANKER_THRESHOLD = 0.35
+RERANKER_TOP_K = 10
 
 # 如果需要在 EMBEDDING_MODEL 中增加自定义的关键字时配置
 EMBEDDING_KEYWORD_FILE = "keywords.txt"
@@ -173,6 +178,7 @@ MODEL_PATH = {
         "piccolo-large-zh": "sensenova/piccolo-large-zh",
         "nlp_gte_sentence-embedding_chinese-large": "damo/nlp_gte_sentence-embedding_chinese-large",
         "text-embedding-ada-002": "your OPENAI_API_KEY",
+        "bce-embedding-base-v1": "maidalun1020/bce-embedding-base_v1",
     },
     "llm_model": {
         "chatglm2-6b": "THUDM/chatglm2-6b",
@@ -236,6 +242,7 @@ MODEL_PATH = {
     "reranker": {
         "bge-reranker-large": "BAAI/bge-reranker-large",
         "bge-reranker-base": "BAAI/bge-reranker-base",
+        "bce-reranker-base-v1": "maidalun1020/bce-reranker-base_v1",
     },
 }
 
