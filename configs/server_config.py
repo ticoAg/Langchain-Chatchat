@@ -36,19 +36,19 @@ else:
 # webui.py server
 WEBUI_SERVER = {
     "host": DEFAULT_BIND_HOST,
-    "port": 26923,
+    "port": 25923,
 }
 
 # api.py server
 API_SERVER = {
     "host": DEFAULT_BIND_HOST,
-    "port": 26924,
+    "port": 26925,
 }
 
 # fastchat openai_api server
 FSCHAT_OPENAI_API = {
     "host": DEFAULT_BIND_HOST,
-    "port": 10000,
+    "port": 15000,
 }
 
 # fastchat model_worker server
@@ -144,13 +144,13 @@ FSCHAT_MODEL_WORKERS = {
     "gemini-api": {
         "port": 21010,
     },
-    "Qwen1.5-32B-Chat": {"port": 10003},
-    "CodeQwen1.5-7B-Chat": {"port": 10004},
-    "Qwen1.5-72B-Chat": {"port": 10005},
+    "Qwen1.5-32B-Chat": {"port": 15003},
+    "CodeQwen1.5-7B-Chat": {"port": 15004},
+    "Qwen1.5-72B-Chat": {"port": 15005},
 }
 
 FSCHAT_CONTROLLER = {
     "host": DEFAULT_BIND_HOST,
-    "port": 10001,
+    "port": 15001,
     "dispatch_method": "shortest_queue",
 }
