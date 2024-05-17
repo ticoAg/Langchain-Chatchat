@@ -139,14 +139,14 @@ class ListResponse(BaseResponse):
 
 
 class ListAnyResponse(BaseResponse):
-    data: List[Any] = pydantic.Field(..., description="List of names")
+    data: List[Dict] = pydantic.Field(..., description="List of names")
 
     class Config:
         schema_extra = {
             "example": {
                 "code": 200,
                 "msg": "success",
-                "data": [Any, Any],
+                "data": [{}, {}],
             }
         }
 
