@@ -51,7 +51,7 @@ from server.knowledge_base.utils import (
     list_files_from_folder,
     list_kbs_from_folder,
 )
-from server.utils import ListAnyResponse, ListResponse
+from server.utils import ListObjResponse, ListResponse
 
 
 def normalize(embeddings: List[List[float]]) -> np.ndarray:
@@ -495,9 +495,9 @@ def get_kb_file_details(kb_name: str) -> List[Dict]:
     return data
 
 
-def list_files_detail(kb_name: str) -> Dict[str, ListAnyResponse]:
+def list_files_detail(kb_name: str) -> Dict[str, ListObjResponse]:
     data = get_kb_file_details(kb_name)
-    return ListAnyResponse(data=data)
+    return ListObjResponse(data=data)
 
 
 class EmbeddingsFunAdapter(Embeddings):

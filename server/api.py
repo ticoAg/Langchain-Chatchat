@@ -32,7 +32,7 @@ from server.llm_api import (
 from server.utils import (
     BaseResponse,
     FastAPI,
-    ListAnyResponse,
+    ListObjResponse,
     ListResponse,
     MakeFastAPIOffline,
     get_prompt_template,
@@ -216,7 +216,7 @@ def mount_knowledge_routes(app: FastAPI):
     app.get(
         "/knowledge_base/list_files_detail",
         tags=["Knowledge Base Management"],
-        response_model=ListAnyResponse,
+        response_model=ListObjResponse,
         summary="获取知识库内的文件详情",
     )(list_files_detail)
 

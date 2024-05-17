@@ -138,7 +138,7 @@ class ListResponse(BaseResponse):
         }
 
 
-class ListAnyResponse(BaseResponse):
+class ListObjResponse(BaseResponse):
     data: List[Dict] = pydantic.Field(..., description="List of names")
 
     class Config:
@@ -146,7 +146,40 @@ class ListAnyResponse(BaseResponse):
             "example": {
                 "code": 200,
                 "msg": "success",
-                "data": [{}, {}],
+                "data": [
+                    {
+                        "kb_name": "valid",
+                        "file_name": "急性胸痛三联征多层螺旋CT检查技术专家共识.pdf",
+                        "file_ext": ".pdf",
+                        "file_version": 1,
+                        "document_loader": "RapidOCRPDFLoader",
+                        "docs_count": 99,
+                        "text_splitter": "ChineseRecursiveTextSplitter",
+                        "create_time": "2024-05-17T02:41:46",
+                        "in_folder": True,
+                        "in_db": True,
+                        "file_mtime": 1715913702.7893038,
+                        "file_size": 798217,
+                        "custom_docs": False,
+                        "No": 3,
+                    },
+                    {
+                        "kb_name": "valid",
+                        "file_name": "成人高血压食养指南（2023年版）-2023.pdf",
+                        "file_ext": ".pdf",
+                        "file_version": 1,
+                        "document_loader": "RapidOCRPDFLoader",
+                        "docs_count": 198,
+                        "text_splitter": "ChineseRecursiveTextSplitter",
+                        "create_time": "2024-05-17T02:43:33",
+                        "in_folder": True,
+                        "in_db": True,
+                        "file_mtime": 1715913808.8612914,
+                        "file_size": 1907199,
+                        "custom_docs": False,
+                        "No": 4,
+                    },
+                ],
             }
         }
 
