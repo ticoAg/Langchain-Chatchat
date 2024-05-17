@@ -5,8 +5,12 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from fastapi import Body
+from h11 import Response
+from httpx import get
 from langchain.docstore.document import Document
 from langchain.embeddings.base import Embeddings
+from pydantic import Field
 
 from configs import (
     EMBEDDING_MODEL,
@@ -38,12 +42,7 @@ from server.db.repository.knowledge_file_repository import (
     list_docs_from_db,
     list_files_from_db,
 )
-from server.embeddings_api import (
-    aembed_texts,
-    embed_documents,
-    embed_texts,
-    rerank_documents,
-)
+from server.embeddings_api import aembed_texts, embed_documents, embed_texts, rerank_documents
 from server.knowledge_base.model.kb_document_model import DocumentWithVSId
 from server.knowledge_base.utils import (
     KnowledgeFile,
@@ -52,6 +51,7 @@ from server.knowledge_base.utils import (
     list_files_from_folder,
     list_kbs_from_folder,
 )
+from server.utils import ListAnyResponse, ListResponse
 
 
 def normalize(embeddings: List[List[float]]) -> np.ndarray:
@@ -83,9 +83,7 @@ class KBService(ABC):
         reranker_model: str = RERANKER_MODEL,
     ):
         self.kb_name = knowledge_base_name
-        self.kb_info = KB_INFO.get(
-            knowledge_base_name, f"关于{knowledge_base_name}的知识库"
-        )
+        self.kb_info = KB_INFO.get(knowledge_base_name, f"关于{knowledge_base_name}的知识库")
         self.embed_model = embed_model
         self.reranker_model = reranker_model
         self.kb_path = get_kb_path(self.kb_name)
@@ -108,9 +106,7 @@ class KBService(ABC):
         if not os.path.exists(self.doc_path):
             os.makedirs(self.doc_path)
         self.do_create_kb()
-        status = add_kb_to_db(
-            self.kb_name, self.kb_info, self.vs_type(), self.embed_model
-        )
+        status = add_kb_to_db(self.kb_name, self.kb_info, self.vs_type(), self.embed_model)
         return status
 
     def clear_vs(self):
@@ -172,9 +168,7 @@ class KBService(ABC):
             status = False
         return status
 
-    def delete_doc(
-        self, kb_file: KnowledgeFile, delete_content: bool = False, **kwargs
-    ):
+    def delete_doc(self, kb_file: KnowledgeFile, delete_content: bool = False, **kwargs):
         """
         从知识库删除文件
         """
@@ -189,9 +183,7 @@ class KBService(ABC):
         更新知识库介绍
         """
         self.kb_info = kb_info
-        status = add_kb_to_db(
-            self.kb_name, self.kb_info, self.vs_type(), self.embed_model
-        )
+        status = add_kb_to_db(self.kb_name, self.kb_info, self.vs_type(), self.embed_model)
         return status
 
     def update_doc(self, kb_file: KnowledgeFile, docs: List[Document] = [], **kwargs):
@@ -204,9 +196,7 @@ class KBService(ABC):
             return self.add_doc(kb_file, docs=docs, **kwargs)
 
     def exist_doc(self, file_name: str):
-        return file_exists_in_db(
-            KnowledgeFile(knowledge_base_name=self.kb_name, filename=file_name)
-        )
+        return file_exists_in_db(KnowledgeFile(knowledge_base_name=self.kb_name, filename=file_name))
 
     def list_files(self):
         return list_files_from_db(self.kb_name)
@@ -257,15 +247,11 @@ class KBService(ABC):
         self.do_add_doc(docs=docs, ids=ids)
         return True
 
-    def list_docs(
-        self, file_name: str = None, metadata: Dict = {}
-    ) -> List[DocumentWithVSId]:
+    def list_docs(self, file_name: str = None, metadata: Dict = {}) -> List[DocumentWithVSId]:
         """
         通过file_name或metadata检索Document
         """
-        doc_infos = list_docs_from_db(
-            kb_name=self.kb_name, file_name=file_name, metadata=metadata
-        )
+        doc_infos = list_docs_from_db(kb_name=self.kb_name, file_name=file_name, metadata=metadata)
         docs = []
         for x in doc_infos:
             doc_info = self.get_doc_by_ids([x["id"]])[0]
@@ -288,9 +274,7 @@ class KBService(ABC):
             try:
                 relative_path = Path(filepath).relative_to(self.doc_path)
             except Exception as e:
-                logger.debug(
-                    f"cannot convert absolute path ({source}) to relative path. error is : {e}"
-                )
+                logger.debug(f"cannot convert absolute path ({source}) to relative path. error is : {e}")
 
         relative_path = str(relative_path.as_posix().strip("/"))
         return relative_path
@@ -386,21 +370,15 @@ class KBServiceFactory:
 
             return PGKBService(kb_name, embed_model=embed_model)
         elif SupportedVSType.MILVUS == vector_store_type:
-            from server.knowledge_base.kb_service.milvus_kb_service import (
-                MilvusKBService,
-            )
+            from server.knowledge_base.kb_service.milvus_kb_service import MilvusKBService
 
             return MilvusKBService(kb_name, embed_model=embed_model)
         elif SupportedVSType.ZILLIZ == vector_store_type:
-            from server.knowledge_base.kb_service.zilliz_kb_service import (
-                ZillizKBService,
-            )
+            from server.knowledge_base.kb_service.zilliz_kb_service import ZillizKBService
 
             return ZillizKBService(kb_name, embed_model=embed_model)
         elif SupportedVSType.DEFAULT == vector_store_type:
-            from server.knowledge_base.kb_service.milvus_kb_service import (
-                MilvusKBService,
-            )
+            from server.knowledge_base.kb_service.milvus_kb_service import MilvusKBService
 
             return MilvusKBService(
                 kb_name, embed_model=embed_model
@@ -410,17 +388,13 @@ class KBServiceFactory:
 
             return ESKBService(kb_name, embed_model=embed_model)
         elif SupportedVSType.CHROMADB == vector_store_type:
-            from server.knowledge_base.kb_service.chromadb_kb_service import (
-                ChromaKBService,
-            )
+            from server.knowledge_base.kb_service.chromadb_kb_service import ChromaKBService
 
             return ChromaKBService(kb_name, embed_model=embed_model)
         elif (
             SupportedVSType.DEFAULT == vector_store_type
         ):  # kb_exists of default kbservice is False, to make validation easier.
-            from server.knowledge_base.kb_service.default_kb_service import (
-                DefaultKBService,
-            )
+            from server.knowledge_base.kb_service.default_kb_service import DefaultKBService
 
             return DefaultKBService(kb_name)
 
@@ -434,6 +408,13 @@ class KBServiceFactory:
     @staticmethod
     def get_default():
         return KBServiceFactory.get_service("default", SupportedVSType.DEFAULT)
+
+
+def validate_kb_name(knowledge_base_id: str) -> bool:
+    # 检查是否包含预期外的字符或路径攻击关键字
+    if "../" in knowledge_base_id:
+        return False
+    return True
 
 
 def get_kb_details() -> List[Dict]:
@@ -472,6 +453,8 @@ def get_kb_details() -> List[Dict]:
 
 
 def get_kb_file_details(kb_name: str) -> List[Dict]:
+    if not validate_kb_name(kb_name):
+        return ListResponse(code=403, msg="Don't attack me", data=[])
     kb = KBServiceFactory.get_service_by_name(kb_name)
     if kb is None:
         return []
@@ -512,39 +495,32 @@ def get_kb_file_details(kb_name: str) -> List[Dict]:
     return data
 
 
+def list_files_detail(kb_name: str) -> Dict[str, ListAnyResponse]:
+    data = get_kb_file_details(kb_name)
+    return ListAnyResponse(data=data)
+
+
 class EmbeddingsFunAdapter(Embeddings):
     def __init__(self, embed_model: str = EMBEDDING_MODEL):
         self.embed_model = embed_model
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        embeddings = embed_texts(
-            texts=texts, embed_model=self.embed_model, to_query=False
-        ).data
+        embeddings = embed_texts(texts=texts, embed_model=self.embed_model, to_query=False).data
         return normalize(embeddings).tolist()
 
     def embed_query(self, text: str) -> List[float]:
-        embeddings = embed_texts(
-            texts=[text], embed_model=self.embed_model, to_query=True
-        ).data
+        embeddings = embed_texts(texts=[text], embed_model=self.embed_model, to_query=True).data
         query_embed = embeddings[0]
         query_embed_2d = np.reshape(query_embed, (1, -1))  # 将一维数组转换为二维数组
         normalized_query_embed = normalize(query_embed_2d)
         return normalized_query_embed[0].tolist()  # 将结果转换为一维数组并返回
 
     async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
-        embeddings = (
-            await aembed_texts(
-                texts=texts, embed_model=self.embed_model, to_query=False
-            )
-        ).data
+        embeddings = (await aembed_texts(texts=texts, embed_model=self.embed_model, to_query=False)).data
         return normalize(embeddings).tolist()
 
     async def aembed_query(self, text: str) -> List[float]:
-        embeddings = (
-            await aembed_texts(
-                texts=[text], embed_model=self.embed_model, to_query=True
-            )
-        ).data
+        embeddings = (await aembed_texts(texts=[text], embed_model=self.embed_model, to_query=True)).data
         query_embed = embeddings[0]
         query_embed_2d = np.reshape(query_embed, (1, -1))  # 将一维数组转换为二维数组
         normalized_query_embed = normalize(query_embed_2d)
@@ -554,11 +530,7 @@ class EmbeddingsFunAdapter(Embeddings):
 def score_threshold_process(score_threshold, k, docs):
     if score_threshold is not None:
         cmp = operator.le
-        docs = [
-            (doc, similarity)
-            for doc, similarity in docs
-            if cmp(similarity, score_threshold)
-        ]
+        docs = [(doc, similarity) for doc, similarity in docs if cmp(similarity, score_threshold)]
     return docs[:k]
 
 
