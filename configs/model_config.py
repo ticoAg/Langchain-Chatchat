@@ -1,5 +1,5 @@
 import os
-
+from pathlib import Path
 import torch
 
 # 可以指定一个绝对路径，统一存放所有的Embedding和LLM模型。
@@ -251,7 +251,8 @@ MODEL_PATH = {
 # 通常情况下不需要更改以下内容
 
 # nltk 模型存储路径
-NLTK_DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "nltk_data")
+# NLTK_DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "nltk_data")
+NLTK_DATA_PATH = Path(__file__).cwd().joinpath(".cache", "nltk_data")
 
 # 使用VLLM可能导致模型推理能力下降，无法完成Agent任务
 VLLM_MODEL_DICT = {
