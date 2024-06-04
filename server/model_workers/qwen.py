@@ -1,7 +1,7 @@
 import json
 import sys
 from http import HTTPStatus
-from typing import Dict, List, Literal
+from typing import Dict, List, Literal, Generator
 
 from fastchat import conversation as conv
 from fastchat.conversation import Conversation
@@ -32,7 +32,7 @@ class QwenWorker(ApiModelWorker):
         super().__init__(**kwargs)
         self.version = version
 
-    def do_chat(self, params: ApiChatParams) -> Dict:
+    def do_chat(self, params: ApiChatParams) -> Generator:
         import dashscope
 
         params.load_config(self.model_names[0])

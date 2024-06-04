@@ -6,7 +6,14 @@ from typing import Any, List, Tuple, Union
 from langchain.embeddings.base import Embeddings
 from langchain.vectorstores.faiss import FAISS
 
-from configs import CHUNK_SIZE, EMBEDDING_MODEL, RERANKER_MODEL, log_verbose, logger
+from configs import (
+    CHUNK_SIZE,
+    EMBEDDING_MODEL,
+    ONLINE_EMBEDDING_MODEL,
+    RERANKER_MODEL,
+    log_verbose,
+    logger,
+)
 from server.utils import (
     embedding_device,
     get_model_path,
@@ -16,7 +23,9 @@ from server.utils import (
 
 
 class ThreadSafeObject:
-    def __init__(self, key: Union[str, Tuple], obj: Any = None, pool: "CachePool" = None):
+    def __init__(
+        self, key: Union[str, Tuple], obj: Any = None, pool: "CachePool" = None
+    ):
         self._obj = obj
         self._key = key
         self._pool = pool
@@ -119,7 +128,9 @@ class CachePool:
         if embed_model in list_online_embed_models():
             return EmbeddingsFunAdapter(embed_model)
         else:
-            return embeddings_pool.load_embeddings(model=embed_model, device=embed_device)
+            return embeddings_pool.load_embeddings(
+                model=embed_model, device=embed_device
+            )
 
 
 class EmbeddingsPool(CachePool):
@@ -133,7 +144,15 @@ class EmbeddingsPool(CachePool):
             self.set(key, item)
             with item.acquire(msg="初始化"):
                 self.atomic.release()
-                if model == "text-embedding-ada-002":  # openai text-embedding-ada-002
+                online_config = ONLINE_EMBEDDING_MODEL.get(model)
+                if online_config.get(model):
+                    from embeddings.openai_like import OpenAILikeEmbeddings
+                    embeddings = OpenAILikeEmbeddings(
+                        model=model,
+                        openai_api_base=online_config.get("api_base_url"),
+                        openai_api_key=online_config.get("api_key"),
+                    )
+                elif model == "text-embedding-ada-002":  # openai text-embedding-ada-002
                     from langchain.embeddings.openai import OpenAIEmbeddings
 
                     embeddings = OpenAIEmbeddings(
@@ -149,7 +168,9 @@ class EmbeddingsPool(CachePool):
                         query_instruction = "为这个句子生成表示以用于检索相关文章："
                     elif "en" in model:
                         # for english model
-                        query_instruction = "Represent this sentence for searching relevant passages:"
+                        query_instruction = (
+                            "Represent this sentence for searching relevant passages:"
+                        )
                     else:
                         # maybe ReRanker or else, just use empty string instead
                         query_instruction = ""
@@ -158,7 +179,9 @@ class EmbeddingsPool(CachePool):
                         model_kwargs={"device": device},
                         query_instruction=query_instruction,
                     )
-                    if model == "bge-large-zh-noinstruct":  # bge large -noinstruct embedding
+                    if (
+                        model == "bge-large-zh-noinstruct"
+                    ):  # bge large -noinstruct embedding
                         embeddings.query_instruction = ""
                 else:
                     from langchain.embeddings.huggingface import HuggingFaceEmbeddings
@@ -188,7 +211,9 @@ class ReRankerPool(CachePool):
                 if model == "bce-reranker-base-v1":
                     from BCEmbedding import RerankerModel
 
-                    reranker = RerankerModel(model_name_or_path=get_model_path(model), device=device)
+                    reranker = RerankerModel(
+                        model_name_or_path=get_model_path(model), device=device
+                    )
                 else:
                     from sentence_transformers import CrossEncoder
 

@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+
 import torch
 
 # 可以指定一个绝对路径，统一存放所有的Embedding和LLM模型。
@@ -51,22 +52,25 @@ MAX_TOKENS = 2048
 
 TEMPERATURE = 0.7
 
+API_BASE_URL = "http://10.228.67.99:26928/v1"
+API_KEY = "sk-nTVTTvIJH7rNphrH19C8067b931549EcAe240fFdDd4a46Ed"
+
 ONLINE_LLM_MODEL = {
     # 线上模型。请在server_config中为每个在线API设置不同的端口
     "Qwen1.5-72B-Chat": {
         "model_name": "Qwen1.5-72B-Chat",
-        "api_base_url": "http://10.228.67.99:26928/v1",
-        "api_key": "sk-nTVTTvIJH7rNphrH19C8067b931549EcAe240fFdDd4a46Ed",
+        "api_base_url": API_BASE_URL,
+        "api_key": API_KEY,
     },
     "Qwen1.5-32B-Chat": {
         "model_name": "Qwen1.5-32B-Chat",
-        "api_base_url": "http://10.228.67.99:26928/v1",
-        "api_key": "sk-nTVTTvIJH7rNphrH19C8067b931549EcAe240fFdDd4a46Ed",
+        "api_base_url": API_BASE_URL,
+        "api_key": API_KEY,
     },
     "CodeQwen1.5-7B-Chat": {
         "model_name": "CodeQwen1.5-7B-Chat",
-        "api_base_url": "http://10.228.67.99:26928/v1",
-        "api_key": "sk-nTVTTvIJH7rNphrH19C8067b931549EcAe240fFdDd4a46Ed",
+        "api_base_url": API_BASE_URL,
+        "api_key": API_KEY,
     },
     "openai-api": {
         "model_name": "gpt-4",
@@ -147,6 +151,14 @@ ONLINE_LLM_MODEL = {
     },
 }
 
+ONLINE_EMBEDDING_MODEL = {
+    "bce-embedding-base-v1": {
+        "model_name": "bce-embedding-base-v1",
+        "api_base_url": API_BASE_URL,
+        "api_key": API_KEY,
+        "provider": "one-api-infinity",
+    }
+}
 # 在以下字典中修改属性值，以指定本地embedding模型存储位置。支持3种设置方法：
 # 1、将对应的值修改为模型绝对路径
 # 2、不修改此处的值（以 text2vec 为例）：
