@@ -6,7 +6,6 @@ transformers==4.41.2
 sentence_transformers==2.2.2
 langchain==0.2.1
 langchain-community==0.2.1
-langchain-experimental==0.0.47
 langchain-core==0.2.3
 langchain-openai==0.1.8
 langchain-text-splitters==0.2.0
