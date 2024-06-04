@@ -5,9 +5,8 @@ from pathlib import Path
 from typing import Dict, Generator, List, Tuple, Union
 
 import chardet
-import langchain.document_loaders
-from langchain.docstore.document import Document
-from langchain.text_splitter import TextSplitter
+import langchain
+import langchain_community.document_loaders
 
 from configs import (
     CHUNK_SIZE,
@@ -23,6 +22,8 @@ from configs import (
 from server.db.models.knowledge_file_model import FileDocModel
 from server.utils import get_model_worker_config, run_in_thread_pool
 from text_splitter import zh_title_enhance as func_zh_title_enhance
+from langchain_core.documents import Document
+from langchain_text_splitters import CharacterTextSplitter, TextSplitter
 
 
 def validate_kb_name(knowledge_base_id: str) -> bool:
@@ -152,7 +153,7 @@ if json.dumps is not _new_json_dumps:
     json.dumps = _new_json_dumps
 
 
-class JSONLinesLoader(langchain.document_loaders.JSONLoader):
+class JSONLinesLoader(langchain_community.document_loaders.JSONLoader):
     """
     行式 Json 加载器，要求文件扩展名为 .jsonl
     """
@@ -162,7 +163,7 @@ class JSONLinesLoader(langchain.document_loaders.JSONLoader):
         self._json_lines = True
 
 
-langchain.document_loaders.JSONLinesLoader = JSONLinesLoader
+langchain_community.document_loaders.JSONLinesLoader = JSONLinesLoader
 
 
 def filter_docs(metadata: Dict, docs: List[Tuple[Document, float]]) -> List[Document]:
@@ -208,7 +209,7 @@ def get_loader(loader_name: str, file_path: str, loader_kwargs: Dict = None):
             document_loaders_module = importlib.import_module("document_loaders")
         else:
             document_loaders_module = importlib.import_module(
-                "langchain.document_loaders"
+                "langchain_community.document_loaders"
             )
         DocumentLoader = getattr(document_loaders_module, loader_name)
     except Exception as e:
@@ -216,7 +217,7 @@ def get_loader(loader_name: str, file_path: str, loader_kwargs: Dict = None):
         logger.error(
             f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None
         )
-        document_loaders_module = importlib.import_module("langchain.document_loaders")
+        document_loaders_module = importlib.import_module("langchain_community.document_loaders")
         DocumentLoader = getattr(document_loaders_module, "UnstructuredFileLoader")
 
     if loader_name == "UnstructuredFileLoader":
@@ -305,7 +306,6 @@ def make_text_splitter(
                     text_splitter_dict[splitter_name]["tokenizer_name_or_path"]
                     == "gpt2"
                 ):
-                    from langchain.text_splitter import CharacterTextSplitter
                     from transformers import GPT2TokenizerFast
 
                     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")

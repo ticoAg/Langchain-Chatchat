@@ -2,6 +2,7 @@ import os
 
 from transformers import AutoTokenizer
 import sys
+from langchain_core.documents import Document
 
 sys.path.append("../..")
 from configs import (
@@ -34,7 +35,6 @@ def text(splitter_name):
 
 
 import pytest
-from langchain.docstore.document import Document
 
 @pytest.mark.parametrize("splitter_name",
                          [

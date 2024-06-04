@@ -1,5 +1,5 @@
-from langchain.tools import Tool
 from server.agent.tools import *
+from langchain_core.tools import Tool
 
 tools = [
     Tool.from_function(

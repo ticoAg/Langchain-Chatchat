@@ -3,11 +3,10 @@ from server.knowledge_base.kb_cache.base import *
 from server.knowledge_base.kb_service.base import EmbeddingsFunAdapter
 from server.utils import load_local_embeddings
 from server.knowledge_base.utils import get_vs_path
-from langchain.vectorstores.faiss import FAISS
-from langchain.docstore.in_memory import InMemoryDocstore
-from langchain.schema import Document
 import os
-from langchain.schema import Document
+from langchain_community.docstore import InMemoryDocstore
+from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
 
 
 # patch FAISS to include doc id in Document.metadata

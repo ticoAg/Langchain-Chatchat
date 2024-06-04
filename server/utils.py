@@ -21,8 +21,6 @@ import httpx
 import pydantic
 import torch
 from fastapi import FastAPI
-from langchain.chat_models import ChatOpenAI
-from langchain.llms import OpenAI
 from pydantic import BaseModel
 
 from configs import (
@@ -39,6 +37,8 @@ from configs import (
     logger,
 )
 from server.minx_chat_openai import MinxChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
+from langchain_community.llms import OpenAI
 
 
 async def wrap_done(fn: Awaitable, event: asyncio.Event):
@@ -454,7 +454,7 @@ def get_model_worker_config(model_name: str = None) -> dict:
         config["model_path"] = path
         if path and os.path.isdir(path):
             config["model_path_exists"] = True
-        config["device"] = llm_device(config.get("device"))
+        config["device"] = llm_device(config.get("device")) if not config.get("api_base_url") else "ap"
     return config
 
 

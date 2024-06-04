@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from langchain.callbacks import AsyncIteratorCallbackHandler
-from langchain.schema import AgentAction, AgentFinish
-from langchain.schema.output import LLMResult
+from langchain_core.agents import AgentAction, AgentFinish
+from langchain_core.outputs import LLMResult
 
 
 def dumps(obj: Dict) -> str:

@@ -3,8 +3,6 @@ import shutil
 from typing import Dict, List, Optional
 
 import sqlalchemy
-from langchain.schema import Document
-from langchain.vectorstores.pgvector import DistanceStrategy, PGVector
 from sqlalchemy import text
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm import Session
@@ -17,6 +15,9 @@ from server.knowledge_base.kb_service.base import (
     score_threshold_process,
 )
 from server.knowledge_base.utils import KnowledgeFile
+from langchain_community.vectorstores import PGVector
+from langchain_community.vectorstores.pgvector import DistanceStrategy
+from langchain_core.documents import Document
 
 
 class PGKBService(KBService):

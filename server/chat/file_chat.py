@@ -9,13 +9,13 @@ from langchain.chains import LLMChain
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from typing import AsyncIterable, List, Optional
 import asyncio
-from langchain.prompts.chat import ChatPromptTemplate
 from server.chat.utils import History
 from server.knowledge_base.kb_service.base import EmbeddingsFunAdapter
 from server.knowledge_base.utils import KnowledgeFile
 import json
 import os
 from pathlib import Path
+from langchain_core.prompts import ChatPromptTemplate
 
 
 def _parse_files_in_thread(

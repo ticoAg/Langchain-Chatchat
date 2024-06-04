@@ -609,13 +609,11 @@ def dump_server_info(after_start=False, args=None):
 
     from server.utils import api_address, webui_address
 
-    logger.debug("\n")
     logger.debug("=" * 30 + "Langchain-Chatchat Configuration" + "=" * 30)
     logger.debug(f"操作系统：{platform.platform()}.")
     logger.debug(f"python版本：{sys.version}")
     logger.debug(f"项目版本：{VERSION}")
     logger.debug(f"langchain版本：{langchain.__version__}. fastchat版本：{fastchat.__version__}")
-    logger.debug("\n")
 
     models = LLM_MODELS
     if args and args.model_name:
@@ -624,12 +622,12 @@ def dump_server_info(after_start=False, args=None):
     logger.debug(f"当前使用的分词器：{TEXT_SPLITTER_NAME}")
     logger.debug(f"当前启动的LLM模型：{models} @ {llm_device()}")
 
-    for model in models:
-        pprint(get_model_worker_config(model))
+    # # XXX 调整日志打印内容
+    # for model in models:
+    #     pprint(get_model_worker_config(model))
     logger.debug(f"当前Embbedings模型： {EMBEDDING_MODEL} @ {embedding_device()}")
 
     if after_start:
-        logger.debug("\n")
         logger.debug(f"服务端运行信息：")
         if args.openai_api:
             logger.debug(f"    OpenAI API Server: {fschat_openai_api_address()}")
@@ -691,7 +689,7 @@ async def start_main_server():
         args.model_worker = False
         run_mode = "lite"
 
-    dump_server_info(args=args)
+    # dump_server_info(args=args)
 
     if len(sys.argv) > 1:
         logger.info(f"正在启动服务：")
@@ -769,8 +767,8 @@ async def start_main_server():
                 )
                 processes["online_api"][model_name] = process
 
-    api_started = manager.Event()
     if args.api:
+        api_started = manager.Event()
         process = Process(
             target=run_api_server,
             name=f"API Server",
@@ -779,8 +777,8 @@ async def start_main_server():
         )
         processes["api"] = process
 
-    webui_started = manager.Event()
     if args.webui:
+        webui_started = manager.Event()
         process = Process(
             target=run_webui,
             name=f"WEBUI Server",

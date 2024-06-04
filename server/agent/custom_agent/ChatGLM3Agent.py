@@ -13,15 +13,16 @@ from langchain.agents.structured_chat.output_parser import StructuredChatOutputP
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.agents.agent import Agent
 from langchain.chains.llm import LLMChain
-from langchain.prompts.chat import ChatPromptTemplate, SystemMessagePromptTemplate
 from langchain.agents.agent import AgentOutputParser
 from langchain.output_parsers import OutputFixingParser
 from langchain.pydantic_v1 import Field
-from langchain.schema import AgentAction, AgentFinish, OutputParserException, BasePromptTemplate
 from langchain.agents.agent import AgentExecutor
-from langchain.callbacks.base import BaseCallbackManager
-from langchain.schema.language_model import BaseLanguageModel
-from langchain.tools.base import BaseTool
+from langchain_core.agents import AgentAction, AgentFinish
+from langchain_core.callbacks import BaseCallbackManager
+from langchain_core.exceptions import OutputParserException
+from langchain_core.language_models import BaseLanguageModel
+from langchain_core.prompts import BasePromptTemplate, ChatPromptTemplate, SystemMessagePromptTemplate
+from langchain_core.tools import BaseTool
 
 HUMAN_MESSAGE_TEMPLATE = "{input}\n\n{agent_scratchpad}"
 logger = logging.getLogger(__name__)

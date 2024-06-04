@@ -3,9 +3,6 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from typing import Any, List, Tuple, Union
 
-from langchain.embeddings.base import Embeddings
-from langchain.vectorstores.faiss import FAISS
-
 from configs import (
     CHUNK_SIZE,
     EMBEDDING_MODEL,
@@ -20,6 +17,9 @@ from server.utils import (
     list_online_embed_models,
     reranker_device,
 )
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings, OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_core.embeddings import Embeddings
 
 
 class ThreadSafeObject:
@@ -153,7 +153,6 @@ class EmbeddingsPool(CachePool):
                         openai_api_key=online_config.get("api_key"),
                     )
                 elif model == "text-embedding-ada-002":  # openai text-embedding-ada-002
-                    from langchain.embeddings.openai import OpenAIEmbeddings
 
                     embeddings = OpenAIEmbeddings(
                         model=model,
@@ -161,7 +160,6 @@ class EmbeddingsPool(CachePool):
                         chunk_size=CHUNK_SIZE,
                     )
                 elif "bge-" in model:
-                    from langchain.embeddings import HuggingFaceBgeEmbeddings
 
                     if "zh" in model:
                         # for chinese model
@@ -184,7 +182,7 @@ class EmbeddingsPool(CachePool):
                     ):  # bge large -noinstruct embedding
                         embeddings.query_instruction = ""
                 else:
-                    from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+                    from langchain_community.embeddings import HuggingFaceEmbeddings
 
                     embeddings = HuggingFaceEmbeddings(
                         model_name=get_model_path(model),

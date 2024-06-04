@@ -1,11 +1,11 @@
 from typing import List, Dict, Optional
-from langchain.embeddings.base import Embeddings
-from langchain.schema import Document
-from langchain.vectorstores import Zilliz
 from configs import kbs_config
 from server.knowledge_base.kb_service.base import KBService, SupportedVSType, EmbeddingsFunAdapter, \
     score_threshold_process
 from server.knowledge_base.utils import KnowledgeFile
+from langchain_community.vectorstores import Zilliz
+from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 
 
 class ZillizKBService(KBService):

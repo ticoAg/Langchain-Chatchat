@@ -10,7 +10,6 @@ import requests
 from langchain_core.embeddings import Embeddings
 from langchain_core.pydantic_v1 import BaseModel, Extra, root_validator
 from langchain_core.utils import get_from_dict_or_env
-from pydantic import Field
 
 __all__ = ["OpenAILikeEmbeddings"]
 
@@ -62,7 +61,7 @@ class OpenAILikeEmbeddings(BaseModel, Embeddings):
         )
 
         values["client"] = TinyAsyncOpenAIInfinityEmbeddingClient(
-            host=values["openai_api_base"],api_key=values["openai_api_key"]
+            host=values["openai_api_base"], api_key=values["openai_api_key"]
         )
         return values
 
@@ -237,7 +236,7 @@ class TinyAsyncOpenAIInfinityEmbeddingClient:  #: :meta private:
             headers={
                 # "accept": "application/json",
                 "content-type": "application/json",
-                "Authorization": self.api_key
+                "Authorization": self.api_key,
             },
             json=dict(
                 input=texts,

@@ -1,11 +1,13 @@
 from __future__ import annotations
-from langchain.agents import Tool, AgentOutputParser
-from langchain.prompts import StringPromptTemplate
+from langchain.agents import AgentOutputParser
 from typing import List
-from langchain.schema import AgentAction, AgentFinish
 
 from configs import SUPPORT_AGENT_MODEL
 from server.agent import model_container
+from langchain_core.agents import AgentAction, AgentFinish
+from langchain_core.prompts import StringPromptTemplate
+from langchain_core.tools import Tool
+
 class CustomPromptTemplate(StringPromptTemplate):
     template: str
     tools: List[Tool]

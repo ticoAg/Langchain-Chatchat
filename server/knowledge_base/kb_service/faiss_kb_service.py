@@ -2,8 +2,6 @@ import os
 import shutil
 from typing import Dict, List, Optional, Tuple
 
-from langchain.docstore.document import Document
-
 from configs import (
     RERANKER_THRESHOLD,
     RERANKER_TOP_K,
@@ -25,6 +23,7 @@ from server.knowledge_base.utils import (
     get_vs_path,
 )
 from server.utils import torch_gc
+from langchain_core.documents import Document
 
 
 class FaissKBService(KBService):

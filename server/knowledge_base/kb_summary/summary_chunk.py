@@ -7,13 +7,13 @@ from langchain.chains.combine_documents.map_reduce import (
     MapReduceDocumentsChain,
     ReduceDocumentsChain,
 )
-from langchain.docstore.document import Document
 from langchain.output_parsers.regex import RegexParser
-from langchain.prompts import PromptTemplate
-from langchain.schema.language_model import BaseLanguageModel
 
 from configs import logger
 from server.knowledge_base.model.kb_document_model import DocumentWithVSId
+from langchain_core.documents import Document
+from langchain_core.language_models import BaseLanguageModel
+from langchain_core.prompts import PromptTemplate
 
 
 class SummaryAdapter:

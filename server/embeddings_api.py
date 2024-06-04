@@ -2,7 +2,6 @@ from typing import Dict, List, Optional
 
 from fastapi import Body
 from fastapi.concurrency import run_in_threadpool
-from langchain.docstore.document import Document
 
 from configs import (
     EMBEDDING_MODEL,
@@ -19,6 +18,7 @@ from server.utils import (
     list_online_embed_models,
     list_rerank_models,
 )
+from langchain_core.documents import Document
 
 online_embed_models = list_online_embed_models()
 

@@ -7,7 +7,6 @@ from fastapi import Body, Request
 from fastapi.concurrency import run_in_threadpool
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chains import LLMChain
-from langchain.prompts.chat import ChatPromptTemplate
 from sse_starlette.sse import EventSourceResponse
 
 from configs import (
@@ -31,6 +30,7 @@ from server.utils import (
     get_prompt_template,
     wrap_done,
 )
+from langchain_core.prompts import ChatPromptTemplate
 
 
 async def knowledge_base_chat(
