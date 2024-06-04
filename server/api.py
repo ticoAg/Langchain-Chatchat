@@ -135,9 +135,15 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
         summary="获取服务器支持的搜索引擎",
     )(list_search_engines)
 
-    @app.post("/server/get_prompt_template", tags=["Server State"], summary="获取服务区配置的 prompt 模板")
+    @app.post(
+        "/server/get_prompt_template",
+        tags=["Server State"],
+        summary="获取服务区配置的 prompt 模板",
+    )
     def get_server_prompt_template(
-        type: Literal["llm_chat", "knowledge_base_chat", "search_engine_chat", "agent_chat"] = Body(
+        type: Literal[
+            "llm_chat", "knowledge_base_chat", "search_engine_chat", "agent_chat"
+        ] = Body(
             "llm_chat",
             description="模板类型，可选值：llm_chat，knowledge_base_chat，search_engine_chat，agent_chat",
         ),
@@ -168,6 +174,7 @@ def mount_knowledge_routes(app: FastAPI):
         DocumentWithVSId,
         delete_docs,
         download_doc,
+        get_docs_by_file,
         list_files,
         recreate_vector_store,
         search_docs,
@@ -178,9 +185,13 @@ def mount_knowledge_routes(app: FastAPI):
     )
     from server.knowledge_base.kb_service import list_files_detail
 
-    app.post("/chat/knowledge_base_chat", tags=["Chat"], summary="与知识库对话")(knowledge_base_chat)
+    app.post("/chat/knowledge_base_chat", tags=["Chat"], summary="与知识库对话")(
+        knowledge_base_chat
+    )
 
-    app.post("/chat/file_chat", tags=["Knowledge Base Management"], summary="文件对话")(file_chat)
+    app.post("/chat/file_chat", tags=["Knowledge Base Management"], summary="文件对话")(
+        file_chat
+    )
 
     app.post("/chat/agent_chat", tags=["Chat"], summary="与agent对话")(agent_chat)
 
@@ -191,20 +202,6 @@ def mount_knowledge_routes(app: FastAPI):
         response_model=ListResponse,
         summary="获取知识库列表",
     )(list_kbs)
-
-    app.post(
-        "/knowledge_base/create_knowledge_base",
-        tags=["Knowledge Base Management"],
-        response_model=BaseResponse,
-        summary="创建知识库",
-    )(create_kb)
-
-    app.post(
-        "/knowledge_base/delete_knowledge_base",
-        tags=["Knowledge Base Management"],
-        response_model=BaseResponse,
-        summary="删除知识库",
-    )(delete_kb)
 
     app.get(
         "/knowledge_base/list_files",
@@ -226,6 +223,27 @@ def mount_knowledge_routes(app: FastAPI):
         response_model=List[DocumentWithVSId],
         summary="搜索知识库",
     )(search_docs)
+
+    app.post(
+        "/knowledge_base/create_knowledge_base",
+        tags=["Knowledge Base Management"],
+        response_model=BaseResponse,
+        summary="创建知识库",
+    )(create_kb)
+
+    app.post(
+        "/knowledge_base/delete_knowledge_base",
+        tags=["Knowledge Base Management"],
+        response_model=BaseResponse,
+        summary="删除知识库",
+    )(delete_kb)
+
+    app.post(
+        "/knowledge_base/get_docs_by_file",
+        tags=["Knowledge Base Management"],
+        response_model=List[DocumentWithVSId],
+        summary="获取知识库内指定文件的所有文档",
+    )(get_docs_by_file)
 
     app.post(
         "/knowledge_base/update_docs_by_id",
@@ -262,7 +280,9 @@ def mount_knowledge_routes(app: FastAPI):
     )(update_docs)
 
     app.get(
-        "/knowledge_base/download_doc", tags=["Knowledge Base Management"], summary="下载对应的知识文件"
+        "/knowledge_base/download_doc",
+        tags=["Knowledge Base Management"],
+        summary="下载对应的知识文件",
     )(download_doc)
 
     app.post(

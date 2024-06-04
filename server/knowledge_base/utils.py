@@ -7,6 +7,7 @@ from typing import Dict, Generator, List, Tuple, Union
 import chardet
 import langchain
 import langchain_community.document_loaders
+import langchain_text_splitters
 
 from configs import (
     CHUNK_SIZE,
@@ -259,7 +260,7 @@ def make_text_splitter(
             headers_to_split_on = text_splitter_dict[splitter_name][
                 "headers_to_split_on"
             ]
-            text_splitter = langchain.text_splitter.MarkdownHeaderTextSplitter(
+            text_splitter = langchain_text_splitters.MarkdownHeaderTextSplitter(
                 headers_to_split_on=headers_to_split_on
             )
         else:
@@ -269,7 +270,7 @@ def make_text_splitter(
                 TextSplitter = getattr(text_splitter_module, splitter_name)
             except:  ## 否则使用langchain的text_splitter
                 text_splitter_module = importlib.import_module(
-                    "langchain.text_splitter"
+                    "langchain_text_splitters"
                 )
                 TextSplitter = getattr(text_splitter_module, splitter_name)
 

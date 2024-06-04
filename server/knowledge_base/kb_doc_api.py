@@ -90,7 +90,24 @@ def search_docs(
                     del d.metadata["vector"]
     return data
 
-
+def get_docs_by_file(
+    knowledge_base_name: str = Body(
+        ..., description="知识库名称", examples=["samples"]
+    ),
+    file_name: str = Body(..., description="文件名称"),
+    metadata: dict = Body(
+        {},
+        description="根据 metadata 进行过滤，仅支持一级键",
+    ),
+    num: int = Body(10, description="返回文档数, -1 for all"),
+) -> List[DocumentWithVSId]:
+    kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
+    docs = kb.list_docs(file_name=file_name, metadata=metadata)
+    if num == -1:
+        return docs
+    else:
+        return docs[:num]
+    
 def update_docs_by_id(
     knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
     docs: Dict[str, Document] = Body(..., description="要更新的文档内容，形如：{id: Document, ...}"),

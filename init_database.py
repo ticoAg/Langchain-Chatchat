@@ -4,6 +4,7 @@ sys.path.append(".")
 import nltk
 
 from configs.model_config import EMBEDDING_MODEL, NLTK_DATA_PATH
+from configs.basic_config import logger
 from server.knowledge_base.migrate import (
     create_tables,
     folder2db,

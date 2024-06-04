@@ -145,7 +145,7 @@ class EmbeddingsPool(CachePool):
             with item.acquire(msg="初始化"):
                 self.atomic.release()
                 online_config = ONLINE_EMBEDDING_MODEL.get(model)
-                if online_config.get(model):
+                if online_config:
                     from embeddings.openai_like import OpenAILikeEmbeddings
                     embeddings = OpenAILikeEmbeddings(
                         model=model,

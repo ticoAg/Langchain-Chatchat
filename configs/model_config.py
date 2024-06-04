@@ -52,8 +52,9 @@ MAX_TOKENS = 2048
 
 TEMPERATURE = 0.7
 
-API_BASE_URL = "http://10.228.67.99:26928/v1"
-API_KEY = "sk-nTVTTvIJH7rNphrH19C8067b931549EcAe240fFdDd4a46Ed"
+# 配置ONLINE LLM及Embedding openai-like API及KEY
+API_BASE_URL = os.getenv("OPENAI_API_BASE")
+API_KEY = os.getenv("OPENAI_API_KEY")
 
 ONLINE_LLM_MODEL = {
     # 线上模型。请在server_config中为每个在线API设置不同的端口
