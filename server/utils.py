@@ -21,8 +21,7 @@ import httpx
 import pydantic
 import torch
 from fastapi import FastAPI
-from langchain.chat_models import ChatOpenAI
-from langchain.llms import OpenAI
+from langchain_openai import ChatOpenAI, OpenAI
 from pydantic import BaseModel
 
 from configs import (
@@ -48,7 +47,9 @@ async def wrap_done(fn: Awaitable, event: asyncio.Event):
     except Exception as e:
         logging.exception(e)
         msg = f"Caught exception: {e}"
-        logger.error(f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None)
+        logger.error(
+            f"{e.__class__.__name__}: {msg}", exc_info=e if log_verbose else None
+        )
     finally:
         # Signal the aiter to stop.
         event.set()
@@ -416,7 +417,9 @@ def get_model_path(model_name: str, type: str = None) -> Optional[str]:
             if path.is_dir():  # use value, {MODEL_ROOT_PATH}/THUDM/chatglm-6b-new
                 return str(path)
             path = root_path / path_str.split("/")[-1]
-            if path.is_dir():  # use value split by "/", {MODEL_ROOT_PATH}/chatglm-6b-new
+            if (
+                path.is_dir()
+            ):  # use value split by "/", {MODEL_ROOT_PATH}/chatglm-6b-new
                 return str(path)
         return path_str  # THUDM/chatglm06b
 
@@ -454,7 +457,9 @@ def get_model_worker_config(model_name: str = None) -> dict:
         config["model_path"] = path
         if path and os.path.isdir(path):
             config["model_path_exists"] = True
-        config["device"] = llm_device(config.get("device"))
+        config["device"] = (
+            llm_device(config.get("device")) if not config.get("api_base_url") else "ap"
+        )
     return config
 
 
@@ -563,7 +568,9 @@ def set_httpx_config(
         os.environ[k] = v
 
     # set host to bypass proxy
-    no_proxy = [x.strip() for x in os.environ.get("no_proxy", "").split(",") if x.strip()]
+    no_proxy = [
+        x.strip() for x in os.environ.get("no_proxy", "").split(",") if x.strip()
+    ]
     no_proxy += [
         # do not use proxy for locahost
         "http://127.0.0.1",
@@ -667,17 +674,20 @@ def get_httpx_client(
         {
             "http://": (
                 os.environ.get("http_proxy")
-                if os.environ.get("http_proxy") and len(os.environ.get("http_proxy").strip())
+                if os.environ.get("http_proxy")
+                and len(os.environ.get("http_proxy").strip())
                 else None
             ),
             "https://": (
                 os.environ.get("https_proxy")
-                if os.environ.get("https_proxy") and len(os.environ.get("https_proxy").strip())
+                if os.environ.get("https_proxy")
+                and len(os.environ.get("https_proxy").strip())
                 else None
             ),
             "all://": (
                 os.environ.get("all_proxy")
-                if os.environ.get("all_proxy") and len(os.environ.get("all_proxy").strip())
+                if os.environ.get("all_proxy")
+                and len(os.environ.get("all_proxy").strip())
                 else None
             ),
         }

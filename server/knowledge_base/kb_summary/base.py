@@ -9,8 +9,7 @@ from server.knowledge_base.kb_cache.faiss_cache import kb_faiss_pool, ThreadSafe
 import os
 import shutil
 from server.db.repository.knowledge_metadata_repository import add_summary_to_db, delete_summary_from_db
-
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 
 
 class KBSummaryService(ABC):

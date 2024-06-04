@@ -1,13 +1,7 @@
-from langchain.utilities.bing_search import BingSearchAPIWrapper
-from langchain.utilities.duckduckgo_search import DuckDuckGoSearchAPIWrapper
 from configs import (BING_SEARCH_URL, BING_SUBSCRIPTION_KEY, METAPHOR_API_KEY,
                      LLM_MODELS, SEARCH_ENGINE_TOP_K, TEMPERATURE, OVERLAP_SIZE)
 from langchain.chains import LLMChain
 from langchain.callbacks import AsyncIteratorCallbackHandler
-
-from langchain.prompts.chat import ChatPromptTemplate
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.docstore.document import Document
 from fastapi import Body
 from fastapi.concurrency import run_in_threadpool
 from sse_starlette import EventSourceResponse
@@ -20,6 +14,10 @@ import json
 from typing import List, Optional, Dict
 from strsimpy.normalized_levenshtein import NormalizedLevenshtein
 from markdownify import markdownify
+from langchain_community.utilities import BingSearchAPIWrapper, DuckDuckGoSearchAPIWrapper
+from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 def bing_search(text, result_len=SEARCH_ENGINE_TOP_K, **kwargs):

@@ -6,9 +6,9 @@ from langchain.chains import LLMChain
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from typing import AsyncIterable, Optional
 import asyncio
-from langchain.prompts import PromptTemplate
 
 from server.utils import get_prompt_template
+from langchain_core.prompts import PromptTemplate
 
 
 async def completion(query: str = Body(..., description="用户输入", examples=["恼羞成怒"]),

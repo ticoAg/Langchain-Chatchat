@@ -3,9 +3,6 @@ import shutil
 from typing import List
 
 from elasticsearch import BadRequestError, Elasticsearch
-from langchain.embeddings.base import Embeddings
-from langchain.schema import Document
-from langchain.vectorstores.elasticsearch import ElasticsearchStore
 
 from configs import (
     CACHED_VS_NUM,
@@ -18,6 +15,9 @@ from configs import (
 from server.knowledge_base.kb_service.base import KBService, SupportedVSType
 from server.knowledge_base.utils import KnowledgeFile
 from server.utils import load_local_embeddings
+from langchain_community.vectorstores import ElasticsearchStore
+from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 
 
 class ESKBService(KBService):

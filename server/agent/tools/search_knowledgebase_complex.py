@@ -5,21 +5,16 @@ import json
 import re
 import warnings
 from typing import Any, Dict, List, Optional
-
-from langchain.callbacks.manager import (
-    AsyncCallbackManagerForChainRun,
-    CallbackManagerForChainRun,
-)
 from langchain.chains.llm import LLMChain
-from langchain.prompts import PromptTemplate
 from langchain.pydantic_v1 import Extra, root_validator
-from langchain.schema import BasePromptTemplate
-from langchain.schema.language_model import BaseLanguageModel
 from pydantic import BaseModel, Field
 
 from configs import MAX_TOKENS, SCORE_THRESHOLD, VECTOR_SEARCH_TOP_K
 from server.agent import model_container
 from server.chat.knowledge_base_chat import knowledge_base_chat
+from langchain_core.callbacks import AsyncCallbackManagerForChainRun, CallbackManagerForChainRun
+from langchain_core.language_models import BaseLanguageModel
+from langchain_core.prompts import BasePromptTemplate, PromptTemplate
 
 
 async def search_knowledge_base_iter(database: str, query: str) -> str:

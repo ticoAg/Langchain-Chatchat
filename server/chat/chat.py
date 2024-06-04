@@ -7,14 +7,13 @@ from langchain.callbacks import AsyncIteratorCallbackHandler
 from typing import AsyncIterable
 import asyncio
 import json
-from langchain.prompts.chat import ChatPromptTemplate
 from typing import List, Optional, Union
 from server.chat.utils import History
-from langchain.prompts import PromptTemplate
 from server.utils import get_prompt_template
 from server.memory.conversation_db_buffer_memory import ConversationBufferDBMemory
 from server.db.repository import add_message_to_db
 from server.callback_handler.conversation_callback_handler import ConversationCallbackHandler
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 
 
 async def chat(query: str = Body(..., description="用户输入", examples=["恼羞成怒"]),

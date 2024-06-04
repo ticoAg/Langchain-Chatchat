@@ -34,7 +34,7 @@ from configs import (
     VERSION,
     WEBUI_SERVER,
     log_verbose,
-    logger,
+    logger
 )
 from server.knowledge_base.migrate import create_tables
 from server.utils import (
@@ -189,7 +189,13 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
             sys.modules["fastchat.serve.vllm_worker"].logger.setLevel(log_level)
 
         else:
-            from fastchat.serve.model_worker import AWQConfig, GptqConfig, ModelWorker, app, worker_id
+            from fastchat.serve.model_worker import (
+                AWQConfig,
+                GptqConfig,
+                ModelWorker,
+                app,
+                worker_id,
+            )
 
             args.gpus = "0"  # GPU的编号,如果有多个GPU，可以设置为"0,1,2,3"
             args.max_gpu_memory = "22GiB"
@@ -216,7 +222,9 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
                 if args.num_gpus is None:
                     args.num_gpus = len(args.gpus.split(","))
                 if len(args.gpus.split(",")) < args.num_gpus:
-                    raise ValueError(f"Larger --num-gpus ({args.num_gpus}) than --gpus {args.gpus}!")
+                    raise ValueError(
+                        f"Larger --num-gpus ({args.num_gpus}) than --gpus {args.gpus}!"
+                    )
                 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
             gptq_config = GptqConfig(
                 ckpt=args.gptq_ckpt or args.model_path,
@@ -319,7 +327,9 @@ def run_controller(log_level: str = "INFO", started_event: mp.Event = None):
     # add interface to release and load model worker
     @app.post("/release_worker")
     def release_worker(
-        model_name: str = Body(..., description="要释放模型的名称", samples=["chatglm-6b"]),
+        model_name: str = Body(
+            ..., description="要释放模型的名称", samples=["chatglm-6b"]
+        ),
         # worker_address: str = Body(None, description="要释放模型的地址，与名称二选一", samples=[FSCHAT_CONTROLLER_address()]),
         new_model_name: str = Body(None, description="释放后加载该模型"),
         keep_origin: bool = Body(False, description="不释放原模型，加载新模型"),
@@ -609,13 +619,13 @@ def dump_server_info(after_start=False, args=None):
 
     from server.utils import api_address, webui_address
 
-    logger.debug("\n")
     logger.debug("=" * 30 + "Langchain-Chatchat Configuration" + "=" * 30)
     logger.debug(f"操作系统：{platform.platform()}.")
     logger.debug(f"python版本：{sys.version}")
     logger.debug(f"项目版本：{VERSION}")
-    logger.debug(f"langchain版本：{langchain.__version__}. fastchat版本：{fastchat.__version__}")
-    logger.debug("\n")
+    logger.debug(
+        f"langchain版本：{langchain.__version__}. fastchat版本：{fastchat.__version__}"
+    )
 
     models = LLM_MODELS
     if args and args.model_name:
@@ -624,12 +634,12 @@ def dump_server_info(after_start=False, args=None):
     logger.debug(f"当前使用的分词器：{TEXT_SPLITTER_NAME}")
     logger.debug(f"当前启动的LLM模型：{models} @ {llm_device()}")
 
-    for model in models:
-        pprint(get_model_worker_config(model))
+    # # XXX 调整日志打印内容
+    # for model in models:
+    #     pprint(get_model_worker_config(model))
     logger.debug(f"当前Embbedings模型： {EMBEDDING_MODEL} @ {embedding_device()}")
 
     if after_start:
-        logger.debug("\n")
         logger.debug(f"服务端运行信息：")
         if args.openai_api:
             logger.debug(f"    OpenAI API Server: {fschat_openai_api_address()}")
@@ -691,7 +701,7 @@ async def start_main_server():
         args.model_worker = False
         run_mode = "lite"
 
-    dump_server_info(args=args)
+    # dump_server_info(args=args)
 
     if len(sys.argv) > 1:
         logger.info(f"正在启动服务：")
@@ -700,7 +710,12 @@ async def start_main_server():
     processes = {"online_api": {}, "model_worker": {}}
 
     def process_count():
-        return len(processes) + len(processes["online_api"]) + len(processes["model_worker"]) - 2
+        return (
+            len(processes)
+            + len(processes["online_api"])
+            + len(processes["model_worker"])
+            - 2
+        )
 
     if args.quiet or not log_verbose:
         log_level = "ERROR"
@@ -769,8 +784,8 @@ async def start_main_server():
                 )
                 processes["online_api"][model_name] = process
 
-    api_started = manager.Event()
     if args.api:
+        api_started = manager.Event()
         process = Process(
             target=run_api_server,
             name=f"API Server",
@@ -779,8 +794,8 @@ async def start_main_server():
         )
         processes["api"] = process
 
-    webui_started = manager.Event()
     if args.webui:
+        webui_started = manager.Event()
         process = Process(
             target=run_webui,
             name=f"WEBUI Server",
@@ -882,7 +897,9 @@ async def start_main_server():
                             processes["model_worker"][new_model_name] = process
                             e.wait()
                             timing = datetime.now() - start_time
-                            logger.info(f"成功启动新模型进程：{new_model_name}。用时：{timing}。")
+                            logger.info(
+                                f"成功启动新模型进程：{new_model_name}。用时：{timing}。"
+                            )
                         else:
                             logger.error(f"未找到模型进程：{model_name}")
 

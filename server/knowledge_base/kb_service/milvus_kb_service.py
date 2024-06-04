@@ -1,9 +1,6 @@
 import os
 from typing import Dict, List, Optional
 
-from langchain.schema import Document
-from langchain.vectorstores.milvus import Milvus
-
 from configs import kbs_config
 from server.db.repository import list_file_num_docs_id_by_kb_name_and_file_name
 from server.knowledge_base.kb_service.base import (
@@ -13,6 +10,8 @@ from server.knowledge_base.kb_service.base import (
     score_threshold_process,
 )
 from server.knowledge_base.utils import KnowledgeFile
+from langchain_community.vectorstores import Milvus
+from langchain_core.documents import Document
 
 
 class MilvusKBService(KBService):

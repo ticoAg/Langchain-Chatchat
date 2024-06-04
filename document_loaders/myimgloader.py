@@ -1,8 +1,7 @@
 from typing import List
 
-from langchain.document_loaders.unstructured import UnstructuredFileLoader
-
 from document_loaders.ocr import get_ocr
+from langchain_community.document_loaders import UnstructuredFileLoader
 
 
 class RapidOCRLoader(UnstructuredFileLoader):

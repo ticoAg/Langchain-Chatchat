@@ -8,8 +8,6 @@ import numpy as np
 from fastapi import Body
 from h11 import Response
 from httpx import get
-from langchain.docstore.document import Document
-from langchain.embeddings.base import Embeddings
 from pydantic import Field
 
 from configs import (
@@ -52,6 +50,8 @@ from server.knowledge_base.utils import (
     list_kbs_from_folder,
 )
 from server.utils import ListObjResponse, ListResponse
+from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 
 
 def normalize(embeddings: List[List[float]]) -> np.ndarray:

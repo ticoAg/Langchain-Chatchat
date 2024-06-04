@@ -1,8 +1,8 @@
 from langchain.chains import LLMChain
-from langchain.prompts.chat import ChatPromptTemplate, HumanMessagePromptTemplate
 
 from configs.model_config import LLM_MODELS, TEMPERATURE
 from server.utils import get_ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 
 model = get_ChatOpenAI(model_name=LLM_MODELS[0], temperature=TEMPERATURE)
 

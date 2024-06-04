@@ -1,7 +1,7 @@
 from typing import List
 
 import tqdm
-from langchain.document_loaders.unstructured import UnstructuredFileLoader
+from langchain_community.document_loaders import UnstructuredFileLoader
 
 
 class RapidOCRPPTLoader(UnstructuredFileLoader):

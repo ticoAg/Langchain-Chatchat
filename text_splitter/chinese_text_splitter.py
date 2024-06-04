@@ -1,6 +1,6 @@
-from langchain.text_splitter import CharacterTextSplitter
 import re
 from typing import List
+from langchain_text_splitters import CharacterTextSplitter
 
 
 class ChineseTextSplitter(CharacterTextSplitter):

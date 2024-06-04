@@ -5,7 +5,6 @@ from typing import Dict, List
 
 from fastapi import Body, File, Form, Query, UploadFile
 from fastapi.responses import FileResponse
-from langchain.docstore.document import Document
 from pydantic import Json
 from sse_starlette import EventSourceResponse
 
@@ -33,6 +32,7 @@ from server.knowledge_base.utils import (
     validate_kb_name,
 )
 from server.utils import BaseResponse, ListResponse, run_in_thread_pool
+from langchain_core.documents import Document
 
 
 def search_docs(

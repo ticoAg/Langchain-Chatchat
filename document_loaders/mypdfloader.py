@@ -3,11 +3,11 @@ from typing import List
 import cv2
 import numpy as np
 import tqdm
-from langchain.document_loaders.unstructured import UnstructuredFileLoader
 from PIL import Image
 
 from configs import PDF_OCR_THRESHOLD
 from document_loaders.ocr import get_ocr
+from langchain_community.document_loaders import UnstructuredFileLoader
 
 
 class RapidOCRPDFLoader(UnstructuredFileLoader):
